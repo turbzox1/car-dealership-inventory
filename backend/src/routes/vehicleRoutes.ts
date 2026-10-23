@@ -1,8 +1,7 @@
 import { RequestHandler, Router } from 'express';
 import { VehicleController } from '../controllers/VehicleController';
 import { requireAdmin } from '../middleware/requireAdmin';
-import { validateBody } from '../middleware/validateBody';
-import { validateQuery } from '../middleware/validateQuery';
+import { validateBody, validateQuery } from '../middleware/validate';
 import { createVehicleSchema, searchVehicleSchema, updateVehicleSchema } from '../validation/vehicleSchemas';
 
 /** Every vehicle route needs a logged-in user; changes to the catalogue are admin-only. */

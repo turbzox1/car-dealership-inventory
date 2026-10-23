@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
-import { validateBody } from '../middleware/validateBody';
+import { validateBody } from '../middleware/validate';
 import { loginSchema, registerSchema } from '../validation/authSchemas';
 
 export function createAuthRoutes(controller: AuthController): Router {
