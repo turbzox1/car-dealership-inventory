@@ -179,13 +179,14 @@ describe('Vehicle routes (Postgres)', () => {
   });
 
   describe('DELETE /api/vehicles/:id', () => {
-    it('deletes the vehicle and returns 204', async () => {
+    it('archives the vehicle (soft delete) and returns 204', async () => {
       const [created] = await seed(civic);
 
       const res = await request(app).delete(`/api/vehicles/${created.id}`).set('Authorization', ADMIN);
 
       expect(res.status).toBe(204);
-      expect(await prisma.vehicle.count()).toBe(0);
+      const row = await prisma.vehicle.findUniqueOrThrow({ where: { id: created.id } });
+      expect(row.isArchived).toBe(true);
     });
 
     it('returns 404 for an unknown id', async () => {

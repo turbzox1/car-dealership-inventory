@@ -13,6 +13,17 @@ export function bearer(role: 'USER' | 'ADMIN'): string {
   return `Bearer ${token}`;
 }
 
+/** Inserts a real user (purchases reference users) and returns its id and Bearer header. */
+export async function createUserWithToken(
+  prisma: PrismaClient,
+  role: 'USER' | 'ADMIN',
+  email = `${role.toLowerCase()}-${Date.now()}-${Math.random()}@example.com`,
+): Promise<{ id: string; auth: string }> {
+  const user = await prisma.user.create({ data: { name: email.split('@')[0], email, passwordHash: 'x', role } });
+  const token = jwt.sign({ role }, TEST_JWT_SECRET, { subject: user.id, expiresIn: '1h' });
+  return { id: user.id, auth: `Bearer ${token}` };
+}
+
 export function createTestPrisma(): PrismaClient {
   return createPrismaClient(TEST_DATABASE_URL);
 }
