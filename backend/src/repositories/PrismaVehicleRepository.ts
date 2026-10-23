@@ -2,14 +2,17 @@ import { Prisma, PrismaClient, Vehicle as VehicleRow } from '@prisma/client';
 import { NewVehicle, Vehicle, VehicleSearch, VehicleUpdate } from '../domain/Vehicle';
 import { VehicleRepository } from './VehicleRepository';
 
-/** Prisma returns NUMERIC as Decimal; the API exposes plain numbers. */
-function toVehicle(row: VehicleRow): Vehicle {
+/** Prisma returns NUMERIC as Decimal; the API exposes plain numbers. The archive flag stays internal. */
+export function toVehicle({ isArchived: _archived, ...row }: VehicleRow): Vehicle {
   return { ...row, price: row.price.toNumber() };
 }
 
 function isNotFound(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
 }
+
+/** Archived vehicles are invisible to every query here. */
+const ACTIVE = { isArchived: false } as const;
 
 /** Postgres-backed VehicleRepository. */
 export class PrismaVehicleRepository implements VehicleRepository {
@@ -20,7 +23,7 @@ export class PrismaVehicleRepository implements VehicleRepository {
   }
 
   async findAll(): Promise<Vehicle[]> {
-    const rows = await this.prisma.vehicle.findMany({ orderBy: { createdAt: 'desc' } });
+    const rows = await this.prisma.vehicle.findMany({ where: ACTIVE, orderBy: { createdAt: 'desc' } });
     return rows.map(toVehicle);
   }
 
@@ -28,6 +31,7 @@ export class PrismaVehicleRepository implements VehicleRepository {
     // Undefined filters are ignored by Prisma, so every criterion is optional
     const rows = await this.prisma.vehicle.findMany({
       where: {
+        ...ACTIVE,
         make: make ? { contains: make, mode: 'insensitive' } : undefined,
         model: model ? { contains: model, mode: 'insensitive' } : undefined,
         category,
@@ -40,20 +44,16 @@ export class PrismaVehicleRepository implements VehicleRepository {
 
   async update(id: string, changes: VehicleUpdate): Promise<Vehicle | null> {
     try {
-      return toVehicle(await this.prisma.vehicle.update({ where: { id }, data: changes }));
+      return toVehicle(await this.prisma.vehicle.update({ where: { id, ...ACTIVE }, data: changes }));
     } catch (err) {
       if (isNotFound(err)) return null;
       throw err;
     }
   }
 
+  /** Soft delete: the row is archived so purchases that reference it remain valid. */
   async delete(id: string): Promise<boolean> {
-    try {
-      await this.prisma.vehicle.delete({ where: { id } });
-      return true;
-    } catch (err) {
-      if (isNotFound(err)) return false;
-      throw err;
-    }
+    const { count } = await this.prisma.vehicle.updateMany({ where: { id, ...ACTIVE }, data: { isArchived: true } });
+    return count > 0;
   }
 }
