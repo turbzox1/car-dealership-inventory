@@ -34,15 +34,17 @@ model User {
 }
 
 model Vehicle {
-  id        String     @id @default(uuid())
-  make      String
-  model     String
-  category  Category
-  price     Decimal    @db.Decimal(12, 2)
-  quantity  Int        @default(0)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  purchases Purchase[]
+  id         String     @id @default(uuid())
+  make       String
+  model      String
+  category   Category
+  price      Decimal    @db.Decimal(12, 2)
+  quantity   Int        @default(0) // CHECK (quantity >= 0) is added in migration SQL
+  // Soft delete: archived vehicles are hidden but purchase history stays intact
+  isArchived Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  purchases  Purchase[]
 
   @@index([make])
   @@index([model])
@@ -53,6 +55,9 @@ model Purchase {
   id          String   @id @default(uuid())
   userId      String
   vehicleId   String
+  // Snapshot of the vehicle at the time of sale
+  make        String
+  model       String
   quantity    Int
   unitPrice   Decimal  @db.Decimal(12, 2)
   purchasedAt DateTime @default(now())
