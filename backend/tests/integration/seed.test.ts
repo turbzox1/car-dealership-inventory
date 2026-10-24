@@ -65,6 +65,9 @@ describe('seedDatabase', () => {
     ['missing email', { adminEmail: '', adminPassword: 'super-secret-1' }],
     ['invalid email', { adminEmail: 'not-an-email', adminPassword: 'super-secret-1' }],
     ['short password', { adminEmail: 'admin@dealership.com', adminPassword: 'short' }],
+    // Seeding is called directly in some setups, so it must not rely on the CLI's env checks
+    ['placeholder password', { adminEmail: 'admin@dealership.com', adminPassword: 'change-me-too' }],
+    ['password under 12 characters', { adminEmail: 'admin@dealership.com', adminPassword: 'Abcdef-123' }],
   ])('refuses to run with %s', async (_case, badOptions) => {
     await expect(seedDatabase(prisma, badOptions)).rejects.toThrow();
     expect(await prisma.user.count()).toBe(0);
