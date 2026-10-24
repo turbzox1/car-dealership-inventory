@@ -42,6 +42,16 @@ describe('Auth routes (Postgres)', () => {
       expect(res.body).toEqual({ error: expect.any(String) });
     });
 
+    it('creates exactly one account when the same email registers concurrently', async () => {
+      const results = await Promise.all(
+        Array.from({ length: 5 }, () => request(app).post('/api/auth/register').send(asha)),
+      );
+
+      expect(results.filter((r) => r.status === 201)).toHaveLength(1);
+      expect(results.filter((r) => r.status === 409)).toHaveLength(4);
+      expect(await prisma.user.count({ where: { email: 'asha@example.com' } })).toBe(1);
+    });
+
     it('treats emails case-insensitively', async () => {
       await request(app).post('/api/auth/register').send(asha);
 
