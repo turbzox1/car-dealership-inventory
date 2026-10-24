@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { Express } from 'express';
 import { createApp } from '../../src/app';
-import { createTestPrisma, resetDatabase, TEST_JWT_SECRET } from './helpers/testDb';
+import { createTestPrisma, createUserWithToken, resetDatabase, TEST_JWT_SECRET } from './helpers/testDb';
 
 describe('Auth routes (Postgres)', () => {
   let prisma: PrismaClient;
@@ -118,6 +118,35 @@ describe('Auth routes (Postgres)', () => {
       const res = await request(app).post('/api/auth/login').send({ email: 'asha@example.com' });
 
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe('GET /api/auth/me', () => {
+    it('returns the signed-in user without credentials', async () => {
+      const { id, auth } = await createUserWithToken(prisma, 'USER', 'me@example.com');
+
+      const res = await request(app).get('/api/auth/me').set('Authorization', auth);
+
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({ id, email: 'me@example.com', role: 'USER' });
+      expect(res.body.user).not.toHaveProperty('passwordHash');
+    });
+
+    it('reflects a role change made after the token was issued', async () => {
+      const { id, auth } = await createUserWithToken(prisma, 'USER', 'promoted@example.com');
+      await prisma.user.update({ where: { id }, data: { role: 'ADMIN' } });
+
+      const res = await request(app).get('/api/auth/me').set('Authorization', auth);
+
+      expect(res.body.user.role).toBe('ADMIN');
+    });
+
+    it('returns 401 without a token or for a deleted account', async () => {
+      const { id, auth } = await createUserWithToken(prisma, 'USER', 'gone@example.com');
+      await prisma.user.delete({ where: { id } });
+
+      expect((await request(app).get('/api/auth/me')).status).toBe(401);
+      expect((await request(app).get('/api/auth/me').set('Authorization', auth)).status).toBe(401);
     });
   });
 });
