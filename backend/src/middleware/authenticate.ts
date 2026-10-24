@@ -15,28 +15,41 @@ declare module 'express-serve-static-core' {
   }
 }
 
+/** Reads the caller's current account state; null when the user no longer exists. */
+export interface UserLookup {
+  findAuthUserById(id: string): Promise<AuthUser | null>;
+}
+
 /**
  * Authentication only: answers "who is calling?".
- * Verifies the Bearer JWT and sets `req.user`; any missing or invalid
- * token becomes a 401. It does not check roles — see `requireAdmin`.
+ * Verifies the Bearer JWT, then loads the user so a deleted account is
+ * rejected and role changes apply immediately rather than when the token
+ * expires. Any failure becomes a 401. Role checks live in `requireAdmin`.
  */
-export function createAuthenticate(jwtSecret: string): RequestHandler {
-  return (req: Request, _res: Response, next: NextFunction) => {
+export function createAuthenticate(jwtSecret: string, users: UserLookup): RequestHandler {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     const [scheme, token] = (req.headers.authorization ?? '').split(' ');
     if (scheme !== 'Bearer' || !token) {
       return next(new UnauthorizedError('Missing or malformed Authorization header'));
     }
 
+    let userId: string | undefined;
     try {
-      const payload = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
-      if (!payload.sub || (payload.role !== 'USER' && payload.role !== 'ADMIN')) {
-        return next(new UnauthorizedError('Invalid token'));
-      }
-      req.user = { id: payload.sub, role: payload.role };
-      next();
+      userId = (jwt.verify(token, jwtSecret) as jwt.JwtPayload).sub;
     } catch {
       // Covers bad signature, malformed token and expiry alike
-      next(new UnauthorizedError('Invalid or expired token'));
+      return next(new UnauthorizedError('Invalid or expired token'));
+    }
+    if (!userId) return next(new UnauthorizedError('Invalid token'));
+
+    try {
+      const user = await users.findAuthUserById(userId);
+      if (!user) return next(new UnauthorizedError('Account no longer exists'));
+      // The role comes from the database, never from the token's claim
+      req.user = user;
+      next();
+    } catch (err) {
+      next(err);
     }
   };
 }

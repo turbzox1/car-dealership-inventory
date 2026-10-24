@@ -34,9 +34,10 @@ export function createApp({ prisma, jwtSecret, corsOrigins = [] }: AppDependenci
     res.json({ status: 'ok' });
   });
 
-  const authenticate = createAuthenticate(jwtSecret);
+  const users = new PrismaUserRepository(prisma);
+  const authenticate = createAuthenticate(jwtSecret, users);
 
-  const authService = new AuthService(new PrismaUserRepository(prisma), jwtSecret);
+  const authService = new AuthService(users, jwtSecret);
   app.use('/api/auth', createAuthRoutes(new AuthController(authService)));
 
   const vehicleService = new VehicleService(new PrismaVehicleRepository(prisma));
