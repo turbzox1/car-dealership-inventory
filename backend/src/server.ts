@@ -1,17 +1,12 @@
 import 'dotenv/config';
 import { createApp } from './app';
+import { loadServerConfig } from './config';
 import { createPrismaClient } from './db/prisma';
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable ${name}`);
-  return value;
-}
+// Throws (and the process exits) on missing, short or placeholder secrets
+const config = loadServerConfig(process.env);
 
-const prisma = createPrismaClient(requireEnv('DATABASE_URL'));
-// Comma-separated list, e.g. "http://localhost:5173,https://my-app.vercel.app"
-const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((o) => o.trim());
-const app = createApp({ prisma, jwtSecret: requireEnv('JWT_SECRET'), corsOrigins });
-const port = Number(process.env.PORT ?? 4000);
+const prisma = createPrismaClient(config.databaseUrl);
+const app = createApp({ prisma, jwtSecret: config.jwtSecret, corsOrigins: config.corsOrigins });
 
-app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+app.listen(config.port, () => console.log(`API listening on http://localhost:${config.port}`));

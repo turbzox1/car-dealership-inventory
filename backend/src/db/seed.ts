@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { MIN_ADMIN_PASSWORD_LENGTH, secretProblems } from '../config';
 import { NewVehicle } from '../domain/Vehicle';
 import { registerSchema } from '../validation/authSchemas';
 
@@ -9,10 +10,14 @@ export interface SeedOptions {
   adminPassword: string;
 }
 
-/** Same email/password rules as registration, so the admin can log in normally. */
+/** Registration rules plus the stricter admin-password rules, enforced even when called directly. */
 const seedOptionsSchema = z.object({
   adminEmail: registerSchema.shape.email,
-  adminPassword: registerSchema.shape.password,
+  adminPassword: registerSchema.shape.password.superRefine((password, ctx) => {
+    for (const message of secretProblems('ADMIN_PASSWORD', password, MIN_ADMIN_PASSWORD_LENGTH)) {
+      ctx.addIssue({ code: 'custom', message });
+    }
+  }),
 });
 
 const SAMPLE_VEHICLES: NewVehicle[] = [
