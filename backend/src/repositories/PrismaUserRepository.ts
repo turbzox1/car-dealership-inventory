@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { NewUser, UserRecord } from '../domain/User';
+import { AuthUser, NewUser, UserRecord } from '../domain/User';
 import { ConflictError } from '../domain/errors';
-import { AuthUser } from '../middleware/authenticate';
 import { UserRepository } from './UserRepository';
 
 /** Postgres-backed UserRepository. */

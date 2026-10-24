@@ -19,3 +19,14 @@ export interface NewUser {
   passwordHash: string;
   role?: Role;
 }
+
+/** Identity of an authenticated caller; the role always comes from the database. */
+export interface AuthUser {
+  id: string;
+  role: Role;
+}
+
+/** Reads the caller's current account state; null when the user no longer exists. */
+export interface UserLookup {
+  findAuthUserById(id: string): Promise<AuthUser | null>;
+}

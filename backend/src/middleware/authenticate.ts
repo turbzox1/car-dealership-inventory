@@ -1,23 +1,14 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { Role } from '../domain/User';
+import { AuthUser, UserLookup } from '../domain/User';
 import { UnauthorizedError } from '../domain/errors';
 
-/** Identity of the caller, set by `authenticate` for downstream handlers. */
-export interface AuthUser {
-  id: string;
-  role: Role;
-}
+export type { AuthUser, UserLookup };
 
 declare module 'express-serve-static-core' {
   interface Request {
     user?: AuthUser;
   }
-}
-
-/** Reads the caller's current account state; null when the user no longer exists. */
-export interface UserLookup {
-  findAuthUserById(id: string): Promise<AuthUser | null>;
 }
 
 /**
