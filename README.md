@@ -1,5 +1,238 @@
-# Car Dealership Inventory System
+# AutoVault: Car Dealership Inventory System
 
-Full-stack inventory system (Express + TypeScript + PostgreSQL backend, React + Tailwind frontend), built test-first.
+A full-stack inventory system for a car dealership: customers browse the showroom, search and filter vehicles and buy in one click; admins add, edit, restock and archive vehicles and see every sale. Built test-first with an Express + TypeScript + PostgreSQL API and a React + Tailwind single-page app.
 
-_Setup instructions, screenshots, test report and "My AI Usage" section coming as the project progresses._
+![Showroom with filters: a sold-out car has its Purchase button disabled](docs/screenshots/03-filters-and-sold-out.jpg)
+
+**Tests:** 182 backend + 71 frontend, all passing · **Coverage:** backend 98.5% statements, frontend 98.1% statements · [Full test report](docs/TEST_REPORT.md)
+
+---
+
+## Contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Key design decisions](#key-design-decisions)
+- [API reference](#api-reference)
+- [Getting started](#getting-started)
+- [Running the tests](#running-the-tests)
+- [Screenshots](#screenshots)
+- [How it was built](#how-it-was-built)
+- [Known limitations](#known-limitations)
+- [My AI Usage](#my-ai-usage)
+
+## Features
+
+**Everyone (signed in)**
+- Register and sign in; the session survives a reload and signs out automatically when it expires.
+- Showroom of all vehicles with category, price and live stock ("3 in stock", "Only 1 left", "Out of stock").
+- Search by make and model (partial, case-insensitive), filter by category and price range; results update as you type.
+- **Purchase** button on every car, disabled when it is out of stock; buying updates the stock immediately.
+- **My orders**: every purchase with date, quantity, unit price and total.
+
+**Admins**
+- Add, edit, restock and delete vehicles from the showroom.
+- Delete archives the vehicle: it disappears from the showroom but past orders keep their details.
+- **All orders**: every sale with the customer, plus revenue and units sold, searchable.
+
+**Reliability and security**
+- Two customers can never buy the same last car: stock is checked and decremented in one atomic database update, backed by a database `CHECK (quantity >= 0)`.
+- Roles are read from the database on every request, so removing someone's admin rights takes effect immediately.
+- Failed logins and registrations are rate-limited per client.
+- The server refuses to start with a missing, short or placeholder `JWT_SECRET`.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| API | Node.js 24, Express 5, TypeScript (strict) |
+| Database | PostgreSQL 16 via Prisma 7 (`@prisma/adapter-pg`), Docker Compose for local dev |
+| Auth | JWT (`jsonwebtoken`), passwords hashed with `bcryptjs` |
+| Validation | zod |
+| Frontend | React 19, Vite, Tailwind CSS v4, React Router |
+| Backend tests | Jest + ts-jest, Supertest, a real Postgres test database |
+| Frontend tests | Vitest, Testing Library, MSW (mock API) |
+| CI | GitHub Actions (backend tests against Postgres) |
+
+## Architecture
+
+```
+backend/src
+├── routes/        URL → middleware chain → controller        (HTTP wiring only)
+├── middleware/    authenticate · requireAdmin · validate · rateLimit · errorHandler
+├── controllers/   thin: read the request, call a service, send the response
+├── services/      business rules: AuthService, VehicleService, InventoryService
+├── repositories/  interfaces (ports) + Prisma implementations
+├── domain/        types and error classes (no framework code)
+├── config.ts      environment validation
+└── app.ts         composition root: wires repositories → services → controllers → routes
+```
+
+- **Services depend on repository interfaces, not on Prisma.** Unit tests swap in in-memory fakes; integration tests use the real Prisma repositories against Postgres.
+- **Authentication and authorization are separate middleware.** `authenticate` answers "who is this?" (401 if unknown), `requireAdmin` answers "are they allowed?" (403 if not).
+- **Errors are typed.** Services throw `NotFoundError`, `ConflictError` and so on; one error handler turns them into `{ "error": "..." }` with the right status.
+
+```
+frontend/src
+├── api/          fetch client (ApiError), per-resource calls, useApi (adds token, signs out on 401)
+├── auth/         AuthProvider (session in localStorage, refreshed from /api/auth/me), route guards
+├── pages/        Login, Register, Dashboard (showroom), My orders, All orders
+├── components/   VehicleCard, filters, dialogs, admin forms, shared states
+└── test/         MSW server, render helpers
+```
+
+## Key design decisions
+
+| Decision | Why |
+|---|---|
+| **Atomic purchase**: one `UPDATE … WHERE quantity >= n` inside a transaction, then insert the purchase | Postgres locks the row, so a second buyer re-checks against the new stock and gets a 409. Proven with tests that fire up to 30 concurrent purchases. |
+| **Soft delete** (`isArchived`) | Purchases reference vehicles; archiving keeps order history intact. Purchases also store make, model and unit price at the time of sale. |
+| **Admins created by a seed script**, never via the API | No way to self-register as admin. `npm run seed` creates the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. |
+| **Only admins change the catalogue** | Matches the spec's admin UI. Regular users can browse and buy. |
+| **Stock changes only through purchase and restock** | `PUT /api/vehicles/:id` rejects `quantity`, so stock and order history can't drift apart. |
+| **Role read from the database per request** | Tokens can't keep powers that were revoked. Costs one primary-key lookup per request. |
+| **Token in `localStorage`** | Simple and survives reloads. Trade-off: readable by injected scripts (an httpOnly cookie would not be); mitigated by a 1-hour token and per-request account checks. |
+| **All vehicles listed, including out-of-stock** | The spec asks for a disabled Purchase button at zero stock, so those cars must be shown. |
+
+## API reference
+
+All responses are JSON. Errors look like `{ "error": "message" }`.
+
+| Method | Path | Access | Notes |
+|---|---|---|---|
+| POST | `/api/auth/register` | public | `{ name, email, password }` → 201 `{ user }`. Rate-limited. |
+| POST | `/api/auth/login` | public | `{ email, password }` → `{ token, user }`. Failed attempts rate-limited. |
+| GET | `/api/auth/me` | signed in | Current account (role as it is now). |
+| GET | `/api/vehicles` | signed in | All non-archived vehicles. |
+| GET | `/api/vehicles/search` | signed in | Query: `make`, `model`, `category`, `minPrice`, `maxPrice` (all optional). |
+| POST | `/api/vehicles` | admin | `{ make, model, category, price, quantity }` → 201. |
+| PUT | `/api/vehicles/:id` | admin | Any of `make, model, category, price` (not quantity). |
+| DELETE | `/api/vehicles/:id` | admin | Archives the vehicle → 204. |
+| POST | `/api/vehicles/:id/purchase` | signed in | Optional `{ quantity }` (default 1) → 201 `{ purchase, vehicle }`; 409 if not enough stock. |
+| POST | `/api/vehicles/:id/restock` | admin | `{ amount }` (1–1000) → updated vehicle. |
+| GET | `/api/purchases/me` | signed in | The caller's purchases. |
+| GET | `/api/purchases` | admin | All purchases with the customer's name and email. |
+| GET | `/api/health` | public | `{ status: "ok" }` |
+
+Categories: `SEDAN`, `SUV`, `TRUCK`, `HATCHBACK`, `COUPE`, `CONVERTIBLE`, `VAN`, `EV`.
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+ (developed on 24) and npm
+- Docker Desktop (for PostgreSQL)
+
+### 1. Start PostgreSQL
+
+From the repository root:
+
+```bash
+docker compose up -d
+```
+
+This starts Postgres 16 on **localhost:5433** (5433 avoids clashing with a locally installed Postgres) and creates two databases: `dealership` for development and `dealership_test` for the tests.
+
+### 2. Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
+
+Edit `backend/.env`:
+- `JWT_SECRET`: at least 32 random characters. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
+- `ADMIN_PASSWORD`: the password for the seeded admin account, at least 12 characters.
+
+The server deliberately refuses to start if these are missing or still placeholders.
+
+```bash
+npx prisma generate          # generate the database client
+npx prisma migrate deploy    # create the tables
+npm run seed                 # admin account + 9 sample vehicles (safe to re-run)
+npm run dev                  # API on http://localhost:4000
+```
+
+### 3. Frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev                  # app on http://localhost:5173
+```
+
+The dev server forwards `/api` to the backend on port 4000, so no CORS setup is needed locally. Sign in with the admin account from your `.env`, or register a new (regular) account.
+
+For a deployed build, set `VITE_API_URL` to the API's address before `npm run build`, and add the frontend's address to the backend's `CORS_ORIGINS`.
+
+## Running the tests
+
+Docker must be running for the backend integration tests.
+
+```bash
+cd backend && npm test               # or npm run test:coverage
+cd frontend && npm test              # or npm run test:coverage
+```
+
+| Suite | Tests | Statements | Branches | Functions | Lines |
+|---|---|---|---|---|---|
+| Backend (Jest) | 182 / 182 | 98.48% | 93.6% | 100% | 98.92% |
+| Frontend (Vitest) | 71 / 71 | 98.05% | 93.09% | 98.71% | 99.23% |
+
+The [full test report](docs/TEST_REPORT.md) lists every test and per-file coverage.
+
+What the tests cover:
+- **Backend unit tests**: services with in-memory fake repositories (business rules, validation, error cases).
+- **Backend integration tests**: every endpoint through HTTP against a real Postgres test database: status codes, 401 vs 403, validation, archiving, rate limits, startup config.
+- **Concurrency tests**: purchases fired in parallel straight at the repository (1 car / 5 buyers, 3 / 10, 5 / 30, mixed quantities, purchases racing restocks). A deliberately broken purchase implementation was used to confirm these tests fail when overselling is possible.
+- **Frontend tests**: whole pages rendered with Testing Library and a mock API: forms, validation, loading, error and empty states, purchase flow, admin dialogs, route guards, session refresh.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Sign in](docs/screenshots/01-sign-in.jpg) Sign in | ![Showroom](docs/screenshots/02-showroom.jpg) Showroom |
+| ![Filters](docs/screenshots/03-filters-and-sold-out.jpg) Filters, and a sold-out car | ![My orders](docs/screenshots/04-my-orders.jpg) My orders |
+| ![Admin showroom](docs/screenshots/05-admin-showroom.jpg) Admin view with Restock / Edit / Delete | ![Add vehicle](docs/screenshots/06-add-vehicle.jpg) Add vehicle |
+| ![All orders](docs/screenshots/07-all-orders.jpg) All orders (admin) | ![Mobile](docs/screenshots/08-mobile.jpg) Phone layout |
+
+## How it was built
+
+- **Test-driven:** features were built as red → green (→ refactor) commit pairs: 21 failing-test commits, each followed by the commit that makes it pass, plus refactor commits. The git history reads as the development story.
+- **Reviewed for production readiness** midway through, which led to several fixes: genuinely concurrent overselling tests, rejecting placeholder secrets, per-request role checks, rate limiting, graceful shutdown and binding the dev database to localhost.
+- **Checked in the browser** against the real backend after each frontend feature. This caught a price-formatting bug ("$18,500.5") that the tests had missed, which was then fixed test-first.
+
+## Known limitations
+
+- Rate-limit counters live in memory: exact for one server, per-instance if the API is scaled out (a shared store such as Redis would fix that).
+- A role change appears in the UI on the next reload; the API enforces it immediately either way.
+- The JWT is stored in `localStorage` (see design decisions).
+- CI runs the backend suite only; the frontend suite runs locally.
+- Not deployed yet.
+
+## My AI Usage
+
+### Tools
+
+- **Claude Code** (Anthropic's coding agent, model Claude Opus 5.5), used in the Claude desktop app with access to the project folder, a terminal and a built-in browser.
+
+Every commit where AI helped carries the trailer `Co-authored-by: Claude <noreply@anthropic.com>`, which is every commit in this repository. The raw, unedited conversation is in [PROMPTS.md](PROMPTS.md).
+
+### How I used it
+
+- **Planning:** I gave Claude the assignment PDF and asked for a requirements summary, an architecture and a list of decisions I needed to make. I then made those decisions myself, step by step: Express + TypeScript, PostgreSQL (because I wanted to deploy), admins created by a seed script, adding order history, and archiving instead of hard deletes.
+- **Implementation with TDD:** for each feature I asked Claude to write the failing tests first, commit them, then implement until green. Claude wrote most of the code; I reviewed each step's summary and steered scope, e.g. asking for authentication and role checks to stay separate with specific 401/403 behaviour.
+- **Understanding the code:** I asked Claude to walk me through how a search request travels from the Express route to Prisma and Postgres, and what happens when two customers buy the last car at the same time.
+- **Review:** I asked for a production-readiness review without code changes, ranked by severity. Its main finding was that the overselling tests could not actually detect overselling, which Claude proved by running a deliberately broken implementation against them. I then chose which findings to fix.
+- **Debugging and environment issues:** Claude diagnosed a local PostgreSQL service occupying port 5432, Prisma 7's new configuration, MSW 3's renamed options and a Docker Desktop update stopping the database.
+- **Verification and docs:** Claude ran the app in a browser against the real backend after each frontend feature, took the screenshots and drafted this README and the test report.
+
+### Reflection
+
+> ✍️ **Draft: rewrite this in your own words before submitting.**
+
+AI made the project much faster: scaffolding, test suites and UI that would have taken days took hours. What mattered most was not code generation but keeping the AI honest. Asking for a review that challenged the work found that a passing concurrency test proved nothing, and checking features in a real browser found a bug that every test had missed. Making the important decisions myself and asking "why" at each step meant I understood the design rather than just receiving it. The main risk I saw is trusting green tests without asking what they actually prove.
