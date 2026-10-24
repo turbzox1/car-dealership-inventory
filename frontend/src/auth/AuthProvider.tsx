@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as authApi from '../api/auth';
+import { ApiError } from '../api/client';
 import type { Session } from '../types';
 import { AuthContext, type AuthContextValue } from './useAuth';
 
@@ -53,6 +54,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => startSession(null), [startSession]);
+
+  // The saved user may be out of date (e.g. role changed since sign-in): refresh it once on load.
+  // The API enforces roles regardless; this keeps the UI from offering what the server will refuse.
+  const [initialToken] = useState(() => session?.token ?? null);
+  useEffect(() => {
+    if (!initialToken) return;
+    let cancelled = false;
+    authApi.fetchMe(initialToken).then(
+      (user) => {
+        if (cancelled) return;
+        // Only apply if the user hasn't signed out or switched accounts meanwhile
+        setSession((current) => {
+          if (current?.token !== initialToken) return current;
+          const next = { token: initialToken, user };
+          writeStoredSession(next);
+          return next;
+        });
+      },
+      (err) => {
+        // 401: token expired or account gone. Anything else (offline, 5xx): keep the saved session.
+        if (!cancelled && err instanceof ApiError && err.status === 401) logout();
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [initialToken, logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ user: session?.user ?? null, token: session?.token ?? null, login, register, logout }),
