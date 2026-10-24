@@ -51,7 +51,10 @@ export function createApp({
   const authenticate = createAuthenticate(jwtSecret, users);
 
   const authService = new AuthService(users, jwtSecret);
-  app.use('/api/auth', createAuthRoutes(new AuthController(authService), createAuthRateLimiters(rateLimits)));
+  app.use(
+    '/api/auth',
+    createAuthRoutes(new AuthController(authService), createAuthRateLimiters(rateLimits), authenticate),
+  );
 
   const vehicleService = new VehicleService(new PrismaVehicleRepository(prisma));
   app.use('/api/vehicles', createVehicleRoutes(new VehicleController(vehicleService), authenticate));

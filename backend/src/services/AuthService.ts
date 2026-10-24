@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PublicUser, UserRecord } from '../domain/User';
-import { ConflictError, UnauthorizedError } from '../domain/errors';
+import { ConflictError, NotFoundError, UnauthorizedError } from '../domain/errors';
 import { UserRepository } from '../repositories/UserRepository';
 
 const SALT_ROUNDS = 10;
@@ -54,6 +54,13 @@ export class AuthService {
       expiresIn: TOKEN_TTL,
     });
     return { token, user: toPublicUser(user) };
+  }
+
+  /** Current account state, so clients can refresh a stale copy (e.g. after a role change). */
+  async getProfile(userId: string): Promise<PublicUser> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new NotFoundError('Account not found');
+    return toPublicUser(user);
   }
 }
 

@@ -14,4 +14,9 @@ export class AuthController {
     const result = await this.auth.login(req.body);
     res.status(200).json(result);
   };
+
+  /** The route's authenticate middleware guarantees req.user. */
+  me = async (req: Request, res: Response): Promise<void> => {
+    res.json({ user: await this.auth.getProfile(req.user!.id) });
+  };
 }

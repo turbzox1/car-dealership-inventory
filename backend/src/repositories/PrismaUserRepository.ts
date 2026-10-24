@@ -11,6 +11,10 @@ export class PrismaUserRepository implements UserRepository {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  findById(id: string): Promise<UserRecord | null> {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
   /** Primary-key lookup run on every authenticated request; selects only what auth needs. */
   findAuthUserById(id: string): Promise<AuthUser | null> {
     return this.prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });

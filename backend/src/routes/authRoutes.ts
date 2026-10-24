@@ -9,9 +9,14 @@ export interface AuthRouteLimiters {
 }
 
 /** Rate limiters run first, so blocked clients never reach validation or the database. */
-export function createAuthRoutes(controller: AuthController, limiters: AuthRouteLimiters): Router {
+export function createAuthRoutes(
+  controller: AuthController,
+  limiters: AuthRouteLimiters,
+  authenticate: RequestHandler,
+): Router {
   const router = Router();
   router.post('/register', limiters.register, validateBody(registerSchema), controller.register);
   router.post('/login', limiters.login, validateBody(loginSchema), controller.login);
+  router.get('/me', authenticate, controller.me);
   return router;
 }
