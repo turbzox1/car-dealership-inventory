@@ -6,7 +6,8 @@ services:
       POSTGRES_PASSWORD: dealership
       POSTGRES_DB: dealership
     ports:
-      - "5433:5432"
+      # Localhost only: the dev database (weak password) must not be reachable from the network
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Creates the separate test database on first start
