@@ -239,6 +239,29 @@ describe('Inventory routes (Postgres)', () => {
     });
   });
 
+  describe('tokens of changed accounts', () => {
+    it('returns 401 (not 500) when a deleted user tries to purchase with an old token', async () => {
+      const id = await createVehicle(1);
+      const ghost = await createUserWithToken(prisma, 'USER', 'ghost@example.com');
+      await prisma.user.delete({ where: { id: ghost.id } });
+
+      const res = await request(app).post(`/api/vehicles/${id}/purchase`).set('Authorization', ghost.auth);
+
+      expect(res.status).toBe(401);
+      expect(await stockOf(id)).toBe(1);
+    });
+
+    it('returns 403 when an admin demoted after login tries to restock', async () => {
+      const id = await createVehicle(1);
+      await prisma.user.update({ where: { id: admin.id }, data: { role: 'USER' } });
+
+      const res = await request(app).post(`/api/vehicles/${id}/restock`).set('Authorization', admin.auth).send({ amount: 5 });
+
+      expect(res.status).toBe(403);
+      expect(await stockOf(id)).toBe(1);
+    });
+  });
+
   describe('database constraints', () => {
     it('rejects negative stock even if application code tried to write it', async () => {
       const id = await createVehicle(1);

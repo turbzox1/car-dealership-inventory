@@ -7,13 +7,10 @@ export const TEST_DATABASE_URL =
 
 export const TEST_JWT_SECRET = 'integration-test-secret';
 
-/** Bearer header for a caller with the given role (no DB user needed for token checks). */
-export function bearer(role: 'USER' | 'ADMIN'): string {
-  const token = jwt.sign({ role }, TEST_JWT_SECRET, { subject: `${role.toLowerCase()}-1`, expiresIn: '1h' });
-  return `Bearer ${token}`;
-}
-
-/** Inserts a real user (purchases reference users) and returns its id and Bearer header. */
+/**
+ * Inserts a real user and returns its id and Bearer header. Tokens must belong
+ * to existing users: authenticate looks each caller up in the database.
+ */
 export async function createUserWithToken(
   prisma: PrismaClient,
   role: 'USER' | 'ADMIN',

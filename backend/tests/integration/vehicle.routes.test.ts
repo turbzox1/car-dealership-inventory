@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { Express } from 'express';
 import request from 'supertest';
 import { createApp } from '../../src/app';
-import { bearer, createTestPrisma, resetDatabase, TEST_JWT_SECRET } from './helpers/testDb';
+import { createTestPrisma, createUserWithToken, resetDatabase, TEST_JWT_SECRET } from './helpers/testDb';
 
 const civic = { make: 'Honda', model: 'Civic', category: 'SEDAN', price: 24000, quantity: 3 };
 const crv = { make: 'Honda', model: 'CR-V', category: 'SUV', price: 32000, quantity: 0 };
@@ -11,8 +11,9 @@ const model3 = { make: 'Tesla', model: 'Model 3', category: 'EV', price: 41000.5
 describe('Vehicle routes (Postgres)', () => {
   let prisma: PrismaClient;
   let app: Express;
-  const ADMIN = bearer('ADMIN');
-  const USER = bearer('USER');
+  // Real users: authenticate now checks the user still exists and reads the role from the database
+  let ADMIN: string;
+  let USER: string;
 
   /** Creates vehicles through the API as an admin and returns their bodies. */
   async function seed(...vehicles: object[]) {
@@ -29,7 +30,11 @@ describe('Vehicle routes (Postgres)', () => {
     app = createApp({ prisma, jwtSecret: TEST_JWT_SECRET });
   });
 
-  beforeEach(() => resetDatabase(prisma));
+  beforeEach(async () => {
+    await resetDatabase(prisma);
+    ADMIN = (await createUserWithToken(prisma, 'ADMIN')).auth;
+    USER = (await createUserWithToken(prisma, 'USER')).auth;
+  });
 
   afterAll(() => prisma.$disconnect());
 

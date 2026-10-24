@@ -1,20 +1,32 @@
 import express, { Express } from 'express';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { createAuthenticate } from '../../src/middleware/authenticate';
+import { createAuthenticate, UserLookup } from '../../src/middleware/authenticate';
 import { requireAdmin } from '../../src/middleware/requireAdmin';
 import { errorHandler } from '../../src/middleware/errorHandler';
+import { Role } from '../../src/domain/User';
 
 const SECRET = 'test-secret';
 
-function tokenFor(role: 'USER' | 'ADMIN', options: jwt.SignOptions = {}): string {
-  return jwt.sign({ role }, SECRET, { subject: 'user-1', expiresIn: '1h', ...options });
+/** Current state of the user table, as authenticate sees it. Tests mutate this. */
+let usersInDb: Map<string, Role>;
+
+const lookup: UserLookup = {
+  findAuthUserById: async (id) => {
+    const role = usersInDb.get(id);
+    return role ? { id, role } : null;
+  },
+};
+
+/** Token as issued at login: subject is the user id, role claim is what the role was then. */
+function tokenFor(role: Role, options: jwt.SignOptions = {}, subject = role === 'ADMIN' ? 'admin-1' : 'user-1'): string {
+  return jwt.sign({ role }, SECRET, { subject, expiresIn: '1h', ...options });
 }
 
 /** Minimal app wiring the middleware the same way real routes will. */
 function buildApp(): Express {
   const app = express();
-  const authenticate = createAuthenticate(SECRET);
+  const authenticate = createAuthenticate(SECRET, lookup);
   const ok = (req: express.Request, res: express.Response) => res.json({ user: req.user });
 
   app.get('/protected', authenticate, ok);
@@ -24,6 +36,10 @@ function buildApp(): Express {
   app.use(errorHandler);
   return app;
 }
+
+beforeEach(() => {
+  usersInDb = new Map<string, Role>([['user-1', 'USER'], ['admin-1', 'ADMIN']]);
+});
 
 describe('authenticate middleware (401 on missing/invalid token)', () => {
   const app = buildApp();
@@ -45,7 +61,7 @@ describe('authenticate middleware (401 on missing/invalid token)', () => {
   });
 
   it('returns 401 for a token signed with a different secret', async () => {
-    const forged = jwt.sign({ role: 'ADMIN' }, 'other-secret', { subject: 'user-1' });
+    const forged = jwt.sign({ role: 'ADMIN' }, 'other-secret', { subject: 'admin-1' });
     const res = await request(app).get('/protected').set('Authorization', `Bearer ${forged}`);
     expect(res.status).toBe(401);
   });
@@ -59,6 +75,36 @@ describe('authenticate middleware (401 on missing/invalid token)', () => {
   it('attaches the user id and role for a valid token', async () => {
     const res = await request(app).get('/protected').set('Authorization', `Bearer ${tokenFor('USER')}`);
     expect(res.status).toBe(200);
+    expect(res.body.user).toEqual({ id: 'user-1', role: 'USER' });
+  });
+});
+
+describe('authenticate uses the current database state, not the token claims', () => {
+  const app = buildApp();
+
+  it('returns 401 when the user behind a valid token has been deleted', async () => {
+    usersInDb.delete('user-1');
+
+    const res = await request(app).get('/protected').set('Authorization', `Bearer ${tokenFor('USER')}`);
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 403 on admin routes for an admin demoted after login', async () => {
+    const tokenIssuedWhileAdmin = tokenFor('ADMIN');
+    usersInDb.set('admin-1', 'USER');
+
+    const res = await request(app).get('/admin').set('Authorization', `Bearer ${tokenIssuedWhileAdmin}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('ignores a role claim that does not match the database', async () => {
+    // Token says ADMIN for a user who is only a USER (e.g. issued before a demotion)
+    const token = tokenFor('ADMIN', {}, 'user-1');
+
+    const res = await request(app).get('/protected').set('Authorization', `Bearer ${token}`);
+
     expect(res.body.user).toEqual({ id: 'user-1', role: 'USER' });
   });
 });
