@@ -1,13 +1,9 @@
-const priceFormat = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
+const wholeDollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const withCents = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
 
-/** "$24,650" for whole dollars, "$24,650.50" when there are cents. */
+/** "$24,650" for whole dollars, "$18,500.50" when there are cents (never "$18,500.5"). */
 export function formatPrice(amount: number): string {
-  return priceFormat.format(amount);
+  return Number.isInteger(amount) ? wholeDollars.format(amount) : withCents.format(amount);
 }
 
 export function stockLabel(quantity: number): string {
