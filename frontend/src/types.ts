@@ -41,6 +41,21 @@ export interface VehicleFilters {
   maxPrice: string;
 }
 
+/** A completed purchase; make, model and price are as they were at the time of sale. */
+export interface Purchase {
+  id: string;
+  userId: string;
+  vehicleId: string;
+  make: string;
+  model: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  purchasedAt: string;
+  /** Only in the admin listing. */
+  customer?: { name: string; email: string };
+}
+
 export interface Session {
   token: string;
   user: User;

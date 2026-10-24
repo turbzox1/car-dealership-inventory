@@ -12,6 +12,13 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
+/** Admin-only pages: everyone else goes back to the showroom. Must sit inside RequireAuth. */
+export function RequireAdmin() {
+  const { user } = useAuth();
+  if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
 /** Keeps signed-in users out of the login and register pages. */
 export function RedirectIfAuthenticated() {
   const { user } = useAuth();

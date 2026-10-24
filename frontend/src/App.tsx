@@ -1,7 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
-import { RedirectIfAuthenticated, RequireAuth } from './auth/routeGuards';
+import { RedirectIfAuthenticated, RequireAdmin, RequireAuth } from './auth/routeGuards';
+import { AllOrdersPage } from './pages/AllOrdersPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { MyOrdersPage } from './pages/MyOrdersPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -15,6 +17,10 @@ export function AppRoutes() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/orders" element={<MyOrdersPage />} />
+        <Route element={<RequireAdmin />}>
+          <Route path="/admin/orders" element={<AllOrdersPage />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
