@@ -9,7 +9,9 @@ function requireEnv(name: string): string {
 }
 
 const prisma = createPrismaClient(requireEnv('DATABASE_URL'));
-const app = createApp({ prisma, jwtSecret: requireEnv('JWT_SECRET') });
+// Comma-separated list, e.g. "http://localhost:5173,https://my-app.vercel.app"
+const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((o) => o.trim());
+const app = createApp({ prisma, jwtSecret: requireEnv('JWT_SECRET'), corsOrigins });
 const port = Number(process.env.PORT ?? 4000);
 
 app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
