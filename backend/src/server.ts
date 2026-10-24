@@ -8,7 +8,12 @@ import { createGracefulShutdown } from './lifecycle';
 const config = loadServerConfig(process.env);
 
 const prisma = createPrismaClient(config.databaseUrl);
-const app = createApp({ prisma, jwtSecret: config.jwtSecret, corsOrigins: config.corsOrigins });
+const app = createApp({
+  prisma,
+  jwtSecret: config.jwtSecret,
+  corsOrigins: config.corsOrigins,
+  trustProxy: config.trustProxy,
+});
 
 const server = app.listen(config.port, () => console.log(`API listening on http://localhost:${config.port}`));
 

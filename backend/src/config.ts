@@ -38,6 +38,8 @@ export interface ServerConfig {
   jwtSecret: string;
   port: number;
   corsOrigins: string[];
+  /** Proxy hops in front of the app; false means X-Forwarded-For is ignored. */
+  trustProxy: number | false;
 }
 
 export function loadServerConfig(env: Env): ServerConfig {
@@ -48,6 +50,11 @@ export function loadServerConfig(env: Env): ServerConfig {
   const port = Number(env.PORT ?? 4000);
   if (!Number.isInteger(port) || port <= 0) problems.push('PORT must be a positive whole number');
 
+  const trustProxy = env.TRUST_PROXY ? Number(env.TRUST_PROXY) : false;
+  if (trustProxy !== false && (!Number.isInteger(trustProxy) || trustProxy < 0)) {
+    problems.push('TRUST_PROXY must be the number of proxy hops (e.g. 1)');
+  }
+
   if (problems.length) fail(problems);
 
   return {
@@ -56,6 +63,7 @@ export function loadServerConfig(env: Env): ServerConfig {
     port,
     // Comma-separated, e.g. "http://localhost:5173,https://my-app.vercel.app"
     corsOrigins: (env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((o) => o.trim()).filter(Boolean),
+    trustProxy,
   };
 }
 

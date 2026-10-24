@@ -22,6 +22,10 @@ export class NotFoundError extends AppError {
   constructor(message = 'Not found') { super(message, 404); }
 }
 
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests, please try again later') { super(message, 429); }
+}
+
 export class ConflictError extends AppError {
   constructor(message: string) { super(message, 409); }
 }

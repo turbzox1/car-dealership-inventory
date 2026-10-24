@@ -7,6 +7,7 @@ import { VehicleController } from './controllers/VehicleController';
 import { NotFoundError } from './domain/errors';
 import { createAuthenticate } from './middleware/authenticate';
 import { errorHandler } from './middleware/errorHandler';
+import { AuthRateLimits, createAuthRateLimiters, DEFAULT_AUTH_RATE_LIMITS } from './middleware/rateLimit';
 import { PrismaInventoryRepository } from './repositories/PrismaInventoryRepository';
 import { PrismaUserRepository } from './repositories/PrismaUserRepository';
 import { PrismaVehicleRepository } from './repositories/PrismaVehicleRepository';
@@ -22,11 +23,23 @@ export interface AppDependencies {
   jwtSecret: string;
   /** Frontend origins allowed to call the API from a browser. */
   corsOrigins?: string[];
+  /** Per-client limits on login failures and registrations. */
+  rateLimits?: AuthRateLimits;
+  /** Proxy hops to trust for the client IP (e.g. 1 on Render); false to ignore X-Forwarded-For. */
+  trustProxy?: number | false;
 }
 
 /** Composition root: wires repositories → services → controllers → routes. */
-export function createApp({ prisma, jwtSecret, corsOrigins = [] }: AppDependencies): Express {
+export function createApp({
+  prisma,
+  jwtSecret,
+  corsOrigins = [],
+  rateLimits = DEFAULT_AUTH_RATE_LIMITS,
+  trustProxy = false,
+}: AppDependencies): Express {
   const app = express();
+  app.set('trust proxy', trustProxy);
+  app.disable('x-powered-by');
   app.use(cors({ origin: corsOrigins }));
   app.use(express.json());
 
@@ -38,7 +51,7 @@ export function createApp({ prisma, jwtSecret, corsOrigins = [] }: AppDependenci
   const authenticate = createAuthenticate(jwtSecret, users);
 
   const authService = new AuthService(users, jwtSecret);
-  app.use('/api/auth', createAuthRoutes(new AuthController(authService)));
+  app.use('/api/auth', createAuthRoutes(new AuthController(authService), createAuthRateLimiters(rateLimits)));
 
   const vehicleService = new VehicleService(new PrismaVehicleRepository(prisma));
   app.use('/api/vehicles', createVehicleRoutes(new VehicleController(vehicleService), authenticate));
