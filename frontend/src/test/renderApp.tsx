@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '../App';
-import { AuthProvider } from '../auth/AuthContext';
+import { AuthProvider } from '../auth/AuthProvider';
 
 /** Renders the whole app at a given URL, the way a user would land on it. */
 export function renderApp(path = '/') {

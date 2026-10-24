@@ -50,7 +50,7 @@ describe('apiRequest', () => {
   it('turns a network failure into a friendly ApiError with status 0', async () => {
     server.use(http.get(apiUrl('/api/health'), () => HttpResponse.error()));
 
-    const error = await apiRequest('/api/health').catch((e) => e);
+    const error = (await apiRequest('/api/health').catch((e: unknown) => e)) as ApiError;
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(0);
@@ -60,7 +60,7 @@ describe('apiRequest', () => {
   it('falls back to a generic message when an error response has no JSON body', async () => {
     server.use(http.get(apiUrl('/api/health'), () => new HttpResponse('Bad gateway', { status: 502 })));
 
-    const error = await apiRequest('/api/health').catch((e) => e);
+    const error = (await apiRequest('/api/health').catch((e: unknown) => e)) as ApiError;
 
     expect(error).toMatchObject({ status: 502, message: expect.stringMatching(/something went wrong/i) });
   });
