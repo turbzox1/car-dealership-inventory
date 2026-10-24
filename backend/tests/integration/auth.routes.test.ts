@@ -13,7 +13,8 @@ describe('Auth routes (Postgres)', () => {
 
   beforeAll(() => {
     prisma = createTestPrisma();
-    app = createApp({ prisma, jwtSecret: TEST_JWT_SECRET });
+    // Limits are tested in rateLimit.test.ts; keep them out of the way here
+    app = createApp({ prisma, jwtSecret: TEST_JWT_SECRET, rateLimits: { login: 1000, register: 1000, windowMs: 60_000 } });
   });
 
   beforeEach(() => resetDatabase(prisma));

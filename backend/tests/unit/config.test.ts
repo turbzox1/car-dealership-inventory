@@ -25,7 +25,17 @@ describe('loadServerConfig', () => {
       jwtSecret: STRONG_SECRET,
       port: 4000,
       corsOrigins: ['http://localhost:5173'],
+      trustProxy: false,
     });
+  });
+
+  it('does not trust proxy headers unless TRUST_PROXY is set', () => {
+    expect(loadServerConfig(validServerEnv).trustProxy).toBe(false);
+    expect(loadServerConfig({ ...validServerEnv, TRUST_PROXY: '1' }).trustProxy).toBe(1);
+  });
+
+  it('throws for a TRUST_PROXY that is not a hop count', () => {
+    expect(() => loadServerConfig({ ...validServerEnv, TRUST_PROXY: 'yes' })).toThrow(/TRUST_PROXY/);
   });
 
   it('parses PORT and a comma-separated CORS_ORIGINS list', () => {
