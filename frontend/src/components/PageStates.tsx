@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import type { ApiError } from '../api/client';
+import { buttonPrimary } from './styles';
 
 /** Skeleton rows while a list loads. */
 export function LoadingRows({ label }: { label: string }) {
   return (
     <div role="status" aria-label={label} className="space-y-3">
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-200/70" />
+        <div key={i} className="h-14 animate-pulse rounded-2xl bg-slate-200/60" />
       ))}
     </div>
   );
@@ -20,14 +21,10 @@ export function LoadError({ what, error, onRetry }: { what: string; error: ApiEr
   const detail =
     error && error.status >= 400 && error.status < 500 ? error.message : 'Check your connection and try again.';
   return (
-    <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center">
-      <p className="font-medium text-rose-800">We couldn't load {what}.</p>
-      <p className="mt-1 text-sm text-rose-700">{detail}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-4 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
-      >
+    <div role="alert" className="rounded-3xl border border-rose-200 bg-rose-50/70 px-6 py-10 text-center">
+      <p className="display text-xl text-rose-800">We couldn't load {what}.</p>
+      <p className="mt-1.5 text-sm text-rose-700">{detail}</p>
+      <button type="button" onClick={onRetry} className={`${buttonPrimary} mt-5`}>
         Try again
       </button>
     </div>
@@ -36,9 +33,9 @@ export function LoadError({ what, error, onRetry }: { what: string; error: ApiEr
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-      <p className="font-display text-lg font-semibold text-ink-900">{title}</p>
-      {children && <div className="mt-2 text-sm text-slate-500">{children}</div>}
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-card/60 px-6 py-14 text-center">
+      <p className="display text-2xl text-ink-900">{title}</p>
+      {children && <div className="mt-2 text-[15px] text-slate-500">{children}</div>}
     </div>
   );
 }

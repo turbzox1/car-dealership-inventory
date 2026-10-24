@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { controlClass } from '../components/styles';
 import { fetchAllPurchases } from '../api/purchases';
 import { AppHeader } from '../components/AppHeader';
 import { OrdersTable } from '../components/OrdersTable';
@@ -14,9 +15,9 @@ function matches(order: Purchase, query: string): boolean {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="mt-1 font-display text-2xl font-semibold text-ink-900">{value}</p>
+    <div className="rounded-3xl border border-slate-200 bg-card px-6 py-5">
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="display mt-2 text-3xl text-ink-900">{value}</p>
     </div>
   );
 }
@@ -34,12 +35,13 @@ export function AllOrdersPage() {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-900">All orders</h1>
-        <p className="mt-1 text-slate-600">Every sale across the showroom.</p>
+      <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+        <span className="eyebrow">Admin</span>
+        <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">All orders</h1>
+        <p className="mt-2 text-[17px] text-slate-500">Every sale across the showroom.</p>
 
         {orders.status === 'ready' && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <Stat label="Revenue" value={formatPrice(revenue)} />
             <Stat label="Orders" value={String(all.length)} />
             <Stat label="Units" value={`${units} ${units === 1 ? 'unit' : 'units'} sold`} />
@@ -58,7 +60,7 @@ export function AllOrdersPage() {
                 placeholder="Search by customer or vehicle"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="mb-4 block w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition placeholder:text-slate-400 focus:border-ink-700 focus:ring-4 focus:ring-ink-700/10"
+                className={`mb-4 max-w-sm ${controlClass(false, 'sm')}`}
               />
               {visible.length > 0 ? (
                 <OrdersTable orders={visible} showCustomer />

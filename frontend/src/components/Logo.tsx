@@ -1,18 +1,24 @@
-/** AutoVault wordmark; `tone` adapts it to dark or light backgrounds. */
-export function Logo({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
-  const text = tone === 'light' ? 'text-white' : 'text-ink-900';
+/**
+ * AutoVault mark: a dial that reads as both a speedometer and a vault lock.
+ * Ink ring, mustard arc, needle; built from primitives so it stays crisp at 16px.
+ */
+export function LogoMark({ className = 'h-8 w-8' }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-display text-xl font-semibold tracking-tight ${text}`}>
-      <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
-        <rect width="32" height="32" rx="8" fill="#111833" stroke={tone === 'light' ? '#2a3566' : 'none'} />
-        <path
-          d="M7 19.5l2.2-5.6A2 2 0 0 1 11.1 12.6h9.8a2 2 0 0 1 1.9 1.3l2.2 5.6v4a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1H10.5v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"
-          fill="#ff9f1c"
-        />
-        <circle cx="11" cy="19.5" r="1.4" fill="#111833" />
-        <circle cx="21" cy="19.5" r="1.4" fill="#111833" />
-      </svg>
-      AutoVault
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" strokeWidth="3.5" />
+      <path d="M3.78 11.55A13 13 0 0 1 13.74 3.2" fill="none" stroke="var(--color-accent-500)" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M16 16L22.4 9.6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="16" cy="16" r="2.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Mark plus lowercase wordmark. */
+export function Logo() {
+  return (
+    <span className="inline-flex items-center gap-2 text-ink-900">
+      <LogoMark />
+      <span className="display text-[22px] leading-none">autovault</span>
     </span>
   );
 }

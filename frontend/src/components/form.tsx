@@ -1,4 +1,5 @@
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { buttonPrimary, controlClass, labelClass } from './styles';
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -11,22 +12,18 @@ export function TextField({ label, error, className = '', ...input }: TextFieldP
   const errorId = `${id}-error`;
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={id} className={labelClass}>
         {label}
       </label>
       <input
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`mt-1.5 block w-full rounded-lg border bg-white px-3.5 py-2.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-4 ${
-          error
-            ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
-            : 'border-slate-300 focus:border-ink-700 focus:ring-ink-700/10'
-        }`}
+        className={`mt-1.5 ${controlClass(Boolean(error))}`}
         {...input}
       />
       {error && (
-        <p id={errorId} className="mt-1.5 text-sm text-rose-600">
+        <p id={errorId} className="mt-1.5 text-sm text-rose-700">
           {error}
         </p>
       )}
@@ -46,24 +43,20 @@ export function SelectField({ label, error, className = '', children, ...select 
   const errorId = `${id}-error`;
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={id} className={labelClass}>
         {label}
       </label>
       <select
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`mt-1.5 block w-full rounded-lg border bg-white px-3.5 py-2.5 text-slate-900 shadow-sm outline-none transition focus:ring-4 ${
-          error
-            ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
-            : 'border-slate-300 focus:border-ink-700 focus:ring-ink-700/10'
-        }`}
+        className={`mt-1.5 ${controlClass(Boolean(error))}`}
         {...select}
       >
         {children}
       </select>
       {error && (
-        <p id={errorId} className="mt-1.5 text-sm text-rose-600">
+        <p id={errorId} className="mt-1.5 text-sm text-rose-700">
           {error}
         </p>
       )}
@@ -74,7 +67,7 @@ export function SelectField({ label, error, className = '', children, ...select 
 /** Form-level error from the server, announced to screen readers. */
 export function FormAlert({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+    <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       {children}
     </div>
   );
@@ -82,13 +75,9 @@ export function FormAlert({ children }: { children: ReactNode }) {
 
 export function SubmitButton({ busy, busyLabel, children }: { busy: boolean; busyLabel: string; children: ReactNode }) {
   return (
-    <button
-      type="submit"
-      disabled={busy}
-      className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink-900 px-4 py-2.5 font-medium text-white shadow-sm transition hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-400/50 disabled:cursor-not-allowed disabled:opacity-70"
-    >
+    <button type="submit" disabled={busy} className={`${buttonPrimary} w-full`}>
       {busy && (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-paper/40 border-t-paper" aria-hidden="true" />
       )}
       {busy ? busyLabel : children}
     </button>

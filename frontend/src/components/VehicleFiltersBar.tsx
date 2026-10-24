@@ -1,4 +1,5 @@
 import { CATEGORIES, CATEGORY_LABELS, type VehicleFilters } from '../types';
+import { controlClass } from './styles';
 
 interface Props {
   filters: VehicleFilters;
@@ -8,8 +9,9 @@ interface Props {
   priceError?: string;
 }
 
-const inputClass =
-  'mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-ink-700 focus:ring-4 focus:ring-ink-700/10';
+// Smaller than form fields so five filters fit on one row
+// Inputs sit inside the mono uppercase labels, so reset the inherited type styles
+const inputClass = `mt-1.5 ${controlClass(false, 'sm')} font-sans normal-case tracking-normal`;
 
 /** Search and filter controls; every change is applied as the user types. */
 export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceError }: Props) {
@@ -17,17 +19,17 @@ export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceE
     onChange({ ...filters, [key]: e.target.value });
 
   return (
-    <section aria-label="Search and filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section aria-label="Search and filters" className="rounded-3xl border border-slate-200 bg-card p-4 sm:p-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1fr_0.8fr_0.8fr]">
-        <label className="text-xs font-medium text-slate-600">
+        <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Make
           <input className={inputClass} placeholder="e.g. Honda" value={filters.make} onChange={set('make')} />
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Model
           <input className={inputClass} placeholder="e.g. Civic" value={filters.model} onChange={set('model')} />
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Category
           <select className={inputClass} value={filters.category} onChange={set('category')}>
             <option value="">All categories</option>
@@ -38,7 +40,7 @@ export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceE
             ))}
           </select>
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Min price
           <input
             className={inputClass}
@@ -51,7 +53,7 @@ export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceE
             aria-invalid={priceError ? true : undefined}
           />
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Max price
           <input
             className={inputClass}
@@ -67,12 +69,12 @@ export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceE
       </div>
       {(priceError || canClear) && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-rose-600">{priceError}</p>
+          <p className="text-sm text-rose-700">{priceError}</p>
           {canClear && (
             <button
               type="button"
               onClick={onClear}
-              className="text-sm font-medium text-ink-800 underline-offset-4 hover:underline"
+              className="text-sm font-semibold text-ink-900 underline decoration-accent-400 decoration-2 underline-offset-4 transition-colors hover:decoration-accent-600"
             >
               Clear filters
             </button>

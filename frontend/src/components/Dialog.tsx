@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { buttonDanger, buttonGhost, buttonPrimary } from './styles';
 
 interface DialogProps {
   title: string;
@@ -37,17 +38,16 @@ export function Dialog({ title, onClose, children, tone = 'default' }: DialogPro
   }, []);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-950/40 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+        className="rise w-full max-w-lg overflow-hidden rounded-t-[28px] border border-slate-200 bg-card shadow-[0_30px_60px_-30px_rgba(27,25,21,0.5)] sm:rounded-[28px]"
       >
-        <div className={`h-1 ${tone === 'danger' ? 'bg-rose-500' : 'bg-accent-500'}`} />
-        <div className="flex items-start justify-between gap-4 px-6 pt-5">
-          <h2 id={titleId} className="font-display text-xl font-semibold text-ink-900">
+        <div className="flex items-start justify-between gap-4 px-7 pt-6">
+          <h2 id={titleId} className={`display text-2xl ${tone === 'danger' ? 'text-rose-800' : 'text-ink-900'}`}>
             {title}
           </h2>
           <button
@@ -55,14 +55,14 @@ export function Dialog({ title, onClose, children, tone = 'default' }: DialogPro
             data-close
             onClick={onClose}
             aria-label="Close"
-            className="-mr-2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="-mr-2 rounded-full p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink-900"
           >
             <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden="true">
               <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </button>
         </div>
-        <div className="px-6 pb-6 pt-4">{children}</div>
+        <div className="px-7 pb-7 pt-4">{children}</div>
       </div>
     </div>
   );
@@ -82,20 +82,20 @@ export function DialogActions({
   busyLabel: string;
   tone?: 'default' | 'danger';
 }) {
-  const primary = tone === 'danger' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-ink-900 hover:bg-ink-800';
+  const primary = tone === 'danger' ? buttonDanger : buttonPrimary;
   return (
     <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+        className={buttonGhost}
       >
         Cancel
       </button>
       <button
         type="submit"
         disabled={busy}
-        className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition disabled:opacity-70 ${primary}`}
+        className={primary}
       >
         {busy && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
         {busy ? busyLabel : submitLabel}

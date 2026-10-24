@@ -3,13 +3,13 @@ import type { Purchase } from '../types';
 
 /** Purchase history table; `showCustomer` adds the buyer column for the admin view. */
 export function OrdersTable({ orders, showCustomer = false }: { orders: Purchase[]; showCustomer?: boolean }) {
-  const th = 'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500';
-  const td = 'px-4 py-3.5 text-sm text-slate-700';
+  const th = 'px-5 py-3.5 text-left font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500';
+  const td = 'px-5 py-4 text-[15px] text-slate-700';
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-card">
       <table className="min-w-full divide-y divide-slate-200">
-        <thead className="bg-slate-50">
+        <thead className="bg-slate-100/60">
           <tr>
             <th scope="col" className={th}>Date</th>
             {showCustomer && <th scope="col" className={th}>Customer</th>}
@@ -21,7 +21,7 @@ export function OrdersTable({ orders, showCustomer = false }: { orders: Purchase
         </thead>
         <tbody className="divide-y divide-slate-100">
           {orders.map((order) => (
-            <tr key={order.id} className="transition hover:bg-slate-50/70">
+            <tr key={order.id} className="transition-colors hover:bg-slate-100/50">
               <td className={`${td} whitespace-nowrap text-slate-500`}>{formatDateTime(order.purchasedAt)}</td>
               {showCustomer && (
                 <td className={td}>

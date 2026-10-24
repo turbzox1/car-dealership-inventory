@@ -40,7 +40,7 @@ export function LoginPage() {
       subtitle={
         <>
           New to AutoVault?{' '}
-          <Link to="/register" className="font-medium text-ink-800 underline-offset-4 hover:underline">
+          <Link to="/register" className="font-semibold text-ink-900 underline decoration-accent-400 decoration-2 underline-offset-4 transition-colors hover:decoration-accent-600">
             Create an account
           </Link>
         </>
