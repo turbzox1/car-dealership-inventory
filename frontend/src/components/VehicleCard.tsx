@@ -19,19 +19,31 @@ function stockTone(quantity: number): string {
   return 'bg-emerald-100 text-emerald-800';
 }
 
+export interface AdminActions {
+  onEdit(vehicle: Vehicle): void;
+  onRestock(vehicle: Vehicle): void;
+  onDelete(vehicle: Vehicle): void;
+}
+
 interface VehicleCardProps {
   vehicle: Vehicle;
   buying: boolean;
   onPurchase(vehicle: Vehicle): void;
+  /** Only passed for admins; the controls aren't rendered otherwise. */
+  admin?: AdminActions;
 }
 
-export function VehicleCard({ vehicle, buying, onPurchase }: VehicleCardProps) {
+const adminButton =
+  'rounded-lg px-2.5 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-700/30';
+
+export function VehicleCard({ vehicle, buying, onPurchase, admin }: VehicleCardProps) {
+  const name = `${vehicle.make} ${vehicle.model}`;
   const soldOut = vehicle.quantity === 0;
   const tint = CATEGORY_TINT[vehicle.category];
 
   return (
     <article
-      aria-label={`${vehicle.make} ${vehicle.model}`}
+      aria-label={name}
       className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className={`relative flex h-32 items-center justify-center bg-gradient-to-br ${tint}`}>
@@ -70,6 +82,37 @@ export function VehicleCard({ vehicle, buying, onPurchase }: VehicleCardProps) {
           )}
           {buying ? 'Buying…' : 'Purchase'}
         </button>
+
+        {admin && (
+          <div className="mt-3 flex items-center justify-between gap-1 border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              aria-label={`Restock ${name}`}
+              onClick={() => admin.onRestock(vehicle)}
+              className={`${adminButton} bg-emerald-50 text-emerald-800 hover:bg-emerald-100`}
+            >
+              + Restock
+            </button>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                aria-label={`Edit ${name}`}
+                onClick={() => admin.onEdit(vehicle)}
+                className={`${adminButton} text-slate-600 hover:bg-slate-100 hover:text-slate-900`}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete ${name}`}
+                onClick={() => admin.onDelete(vehicle)}
+                className={`${adminButton} text-rose-600 hover:bg-rose-50`}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

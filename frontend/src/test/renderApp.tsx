@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '../App';
 import { AuthProvider } from '../auth/AuthProvider';
+import type { User } from '../types';
 
 /** Renders the whole app at a given URL, the way a user would land on it. */
 export function renderApp(path = '/') {
@@ -28,6 +29,6 @@ export const asha = {
 };
 
 /** Pretends the user logged in earlier in this browser. */
-export function storeSession(user = asha, token = 'stored-token') {
+export function storeSession(user: User = asha, token = 'stored-token') {
   localStorage.setItem(SESSION_KEY, JSON.stringify({ token, user }));
 }

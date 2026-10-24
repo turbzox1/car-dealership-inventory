@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  createVehicle,
+  deleteVehicle,
+  restockVehicle,
+  updateVehicle,
+  type NewVehicle,
+  type VehicleDetails,
+} from '../api/adminVehicles';
 import { ApiError } from '../api/client';
+import { DeleteVehicleDialog } from '../components/admin/DeleteVehicleDialog';
+import { RestockDialog } from '../components/admin/RestockDialog';
+import { VehicleFormDialog } from '../components/admin/VehicleFormDialog';
 import { useApi } from '../api/useApi';
 import { fetchVehicles, hasActiveFilters, purchaseVehicle } from '../api/vehicles';
 import { useAuth } from '../auth/useAuth';
@@ -14,6 +25,14 @@ const NO_FILTERS: VehicleFilters = { make: '', model: '', category: '', minPrice
 const SEARCH_DELAY_MS = 300;
 
 type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; vehicles: Vehicle[] };
+
+/** Which admin dialog is open, if any. */
+type AdminDialog =
+  | { kind: 'add' }
+  | { kind: 'edit'; vehicle: Vehicle }
+  | { kind: 'restock'; vehicle: Vehicle }
+  | { kind: 'delete'; vehicle: Vehicle }
+  | null;
 
 function priceRangeError({ minPrice, maxPrice }: VehicleFilters): string | undefined {
   if (minPrice !== '' && maxPrice !== '' && Number(minPrice) > Number(maxPrice)) {
@@ -32,6 +51,8 @@ export function DashboardPage() {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const buyingRef = useRef(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  const [adminDialog, setAdminDialog] = useState<AdminDialog>(null);
+  const isAdmin = user?.role === 'ADMIN';
 
   const priceError = priceRangeError(filters);
   const reload = useCallback(() => {
@@ -56,17 +77,55 @@ export function DashboardPage() {
     };
   }, [call, appliedFilters, reloadKey]);
 
+  /** Applies a change to the loaded list without refetching. */
+  const updateList = useCallback((change: (vehicles: Vehicle[]) => Vehicle[]) => {
+    setLoad((current) => (current.status === 'ready' ? { status: 'ready', vehicles: change(current.vehicles) } : current));
+  }, []);
+  const replaceVehicle = (updated: Vehicle) => updateList((list) => list.map((v) => (v.id === updated.id ? updated : v)));
+  const closeAdminDialog = useCallback(() => setAdminDialog(null), []);
+
+  // Each handler throws on failure so the dialog stays open and shows the error
+  async function handleAdd(values: NewVehicle | VehicleDetails) {
+    const created = await createVehicle(call, values as NewVehicle);
+    updateList((list) => [created, ...list]);
+    setAdminDialog(null);
+    notify('success', `Added ${created.make} ${created.model}.`);
+  }
+
+  async function handleEdit(id: string, values: VehicleDetails) {
+    replaceVehicle(await updateVehicle(call, id, values));
+    setAdminDialog(null);
+    notify('success', 'Changes saved.');
+  }
+
+  async function handleRestock(vehicle: Vehicle, amount: number) {
+    replaceVehicle(await restockVehicle(call, vehicle.id, amount));
+    setAdminDialog(null);
+    notify('success', `Added ${amount} × ${vehicle.make} ${vehicle.model} to stock.`);
+  }
+
+  async function handleDelete(vehicle: Vehicle) {
+    await deleteVehicle(call, vehicle.id);
+    updateList((list) => list.filter((v) => v.id !== vehicle.id));
+    setAdminDialog(null);
+    notify('success', `Deleted ${vehicle.make} ${vehicle.model}.`);
+  }
+
+  const adminActions = isAdmin
+    ? {
+        onEdit: (vehicle: Vehicle) => setAdminDialog({ kind: 'edit', vehicle }),
+        onRestock: (vehicle: Vehicle) => setAdminDialog({ kind: 'restock', vehicle }),
+        onDelete: (vehicle: Vehicle) => setAdminDialog({ kind: 'delete', vehicle }),
+      }
+    : undefined;
+
   async function handlePurchase(vehicle: Vehicle) {
     if (buyingRef.current) return;
     buyingRef.current = true;
     setBuyingId(vehicle.id);
     try {
       const { vehicle: updated } = await purchaseVehicle(call, vehicle.id);
-      setLoad((current) =>
-        current.status === 'ready'
-          ? { status: 'ready', vehicles: current.vehicles.map((v) => (v.id === updated.id ? updated : v)) }
-          : current,
-      );
+      replaceVehicle(updated);
       notify('success', `You bought a ${vehicle.make} ${vehicle.model}.`);
     } catch (err) {
       notify('error', err instanceof ApiError ? err.message : 'Purchase failed. Please try again.');
@@ -93,11 +152,22 @@ export function DashboardPage() {
             </h1>
             <p className="mt-1 text-slate-600">Browse the showroom and buy in one click.</p>
           </div>
-          {load.status === 'ready' && (
-            <p className="text-sm text-slate-500">
-              {vehicles.length} {vehicles.length === 1 ? 'vehicle' : 'vehicles'} · {inStock} in stock
-            </p>
-          )}
+          <div className="flex items-center gap-4">
+            {load.status === 'ready' && (
+              <p className="text-sm text-slate-500">
+                {vehicles.length} {vehicles.length === 1 ? 'vehicle' : 'vehicles'} · {inStock} in stock
+              </p>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setAdminDialog({ kind: 'add' })}
+                className="rounded-lg bg-accent-500 px-4 py-2.5 text-sm font-semibold text-ink-950 shadow-sm transition hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-400/50"
+              >
+                + Add vehicle
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mt-6">
@@ -152,12 +222,36 @@ export function DashboardPage() {
                   vehicle={vehicle}
                   buying={buyingId === vehicle.id}
                   onPurchase={handlePurchase}
+                  admin={adminActions}
                 />
               ))}
             </div>
           )}
         </section>
       </main>
+
+      {adminDialog?.kind === 'add' && <VehicleFormDialog onClose={closeAdminDialog} onSubmit={handleAdd} />}
+      {adminDialog?.kind === 'edit' && (
+        <VehicleFormDialog
+          vehicle={adminDialog.vehicle}
+          onClose={closeAdminDialog}
+          onSubmit={(values) => handleEdit(adminDialog.vehicle.id, values)}
+        />
+      )}
+      {adminDialog?.kind === 'restock' && (
+        <RestockDialog
+          vehicle={adminDialog.vehicle}
+          onClose={closeAdminDialog}
+          onSubmit={(amount) => handleRestock(adminDialog.vehicle, amount)}
+        />
+      )}
+      {adminDialog?.kind === 'delete' && (
+        <DeleteVehicleDialog
+          vehicle={adminDialog.vehicle}
+          onClose={closeAdminDialog}
+          onConfirm={() => handleDelete(adminDialog.vehicle)}
+        />
+      )}
       <Toast message={toast} onDismiss={dismissToast} />
     </div>
   );

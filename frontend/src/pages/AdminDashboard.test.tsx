@@ -89,7 +89,8 @@ describe('Adding a vehicle', () => {
   });
 
   it('shows a server error inside the dialog and keeps it open', async () => {
-    capture('post', '/api/vehicles', () => HttpResponse.json({ error: 'price: Too big' }, { status: 400 }));
+    // Valid by the client's rules; the server still rejects it (e.g. a rule the client doesn't know)
+    capture('post', '/api/vehicles', () => HttpResponse.json({ error: 'model: Already in catalogue' }, { status: 400 }));
     const { user } = await renderAs(admin);
 
     await user.click(screen.getByRole('button', { name: /add vehicle/i }));
@@ -97,11 +98,11 @@ describe('Adding a vehicle', () => {
     await user.type(form.getByLabelText(/make/i), 'Toyota');
     await user.type(form.getByLabelText(/model/i), 'Supra');
     await user.selectOptions(form.getByLabelText(/category/i), 'COUPE');
-    await user.type(form.getByLabelText(/price/i), '999999999');
+    await user.type(form.getByLabelText(/price/i), '30000');
     await user.type(form.getByLabelText(/quantity/i), '1');
     await user.click(form.getByRole('button', { name: /add vehicle/i }));
 
-    expect(await form.findByRole('alert')).toHaveTextContent('price: Too big');
+    expect(await form.findByRole('alert')).toHaveTextContent('model: Already in catalogue');
     expect(dialog()).toBeInTheDocument();
   });
 
