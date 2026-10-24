@@ -103,7 +103,10 @@ describe('Inventory routes (Postgres)', () => {
     });
   });
 
-  describe('concurrent purchases (no overselling)', () => {
+  // End-to-end check that racing HTTP buyers get 201/409 and consistent stock.
+  // supertest staggers requests, so this does NOT reliably detect a race on its
+  // own; the overselling guarantee is proven in PrismaInventoryRepository.test.ts.
+  describe('concurrent purchases over HTTP (end-to-end status codes)', () => {
     const buyConcurrently = (id: string, buyers: number) =>
       Promise.all(
         Array.from({ length: buyers }, (_, i) =>
