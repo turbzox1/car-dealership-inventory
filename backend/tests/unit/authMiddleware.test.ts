@@ -66,6 +66,19 @@ describe('authenticate middleware (401 on missing/invalid token)', () => {
     expect(res.status).toBe(401);
   });
 
+  it('returns 401 for a correctly signed token that uses an algorithm other than HS256', async () => {
+    const hs512 = tokenFor('USER', { algorithm: 'HS512' });
+    const res = await request(app).get('/protected').set('Authorization', `Bearer ${hs512}`);
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: 'Invalid or expired token' });
+  });
+
+  it('returns 401 for an unsigned (alg: none) token', async () => {
+    const unsigned = jwt.sign({ role: 'ADMIN' }, '', { algorithm: 'none', subject: 'admin-1' });
+    const res = await request(app).get('/protected').set('Authorization', `Bearer ${unsigned}`);
+    expect(res.status).toBe(401);
+  });
+
   it('returns 401 for an expired token', async () => {
     const expired = tokenFor('USER', { expiresIn: -10 });
     const res = await request(app).get('/protected').set('Authorization', `Bearer ${expired}`);

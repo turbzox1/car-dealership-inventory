@@ -24,6 +24,7 @@ describe('loadServerConfig', () => {
       databaseUrl: validServerEnv.DATABASE_URL,
       jwtSecret: STRONG_SECRET,
       port: 4000,
+      host: '127.0.0.1',
       corsOrigins: ['http://localhost:5173'],
       trustProxy: false,
     });
@@ -32,6 +33,20 @@ describe('loadServerConfig', () => {
   it('does not trust proxy headers unless TRUST_PROXY is set', () => {
     expect(loadServerConfig(validServerEnv).trustProxy).toBe(false);
     expect(loadServerConfig({ ...validServerEnv, TRUST_PROXY: '1' }).trustProxy).toBe(1);
+  });
+
+  it('listens on localhost only outside production', () => {
+    expect(loadServerConfig(validServerEnv).host).toBe('127.0.0.1');
+    expect(loadServerConfig({ ...validServerEnv, NODE_ENV: 'development' }).host).toBe('127.0.0.1');
+  });
+
+  it('listens on all interfaces in production, so a hosting platform can route to it', () => {
+    expect(loadServerConfig({ ...validServerEnv, NODE_ENV: 'production' }).host).toBe('0.0.0.0');
+  });
+
+  it('lets HOST override the default', () => {
+    expect(loadServerConfig({ ...validServerEnv, HOST: '0.0.0.0' }).host).toBe('0.0.0.0');
+    expect(loadServerConfig({ ...validServerEnv, NODE_ENV: 'production', HOST: '::' }).host).toBe('::');
   });
 
   it('throws for a TRUST_PROXY that is not a hop count', () => {

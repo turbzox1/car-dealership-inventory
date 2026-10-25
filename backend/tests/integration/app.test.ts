@@ -38,6 +38,24 @@ describe('App-wide behaviour', () => {
     expect(res.body).toEqual({ error: expect.any(String) });
   });
 
+  it('returns 413 (not 500) for a body over the size limit', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ email: 'a@b.co', password: 'x'.repeat(200_000) }));
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({ error: 'Request body is too large' });
+  });
+
+  it('sends security headers on API responses', async () => {
+    const res = await request(app).get('/api/health');
+    expect(res.headers['content-security-policy']).toBe("default-src 'none';frame-ancestors 'none'");
+    expect(res.headers['strict-transport-security']).toMatch(/max-age=\d+/);
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-frame-options']).toBe('DENY');
+    expect(res.headers['referrer-policy']).toBe('no-referrer');
+  });
+
   describe('CORS', () => {
     it('allows the configured frontend origin, including preflight for Authorization', async () => {
       const res = await request(app)
