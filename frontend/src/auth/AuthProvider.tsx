@@ -41,15 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string, options?: { requireAdmin?: boolean }) => {
-      const next = await authApi.login(email, password);
-      // Checked before saving anything: the wrong option must not leave a session behind.
-      // (The API enforces roles on every request regardless; this is about a clear message.)
-      if (options?.requireAdmin && next.user.role !== 'ADMIN') {
-        throw new ApiError(403, "This account doesn't have admin access. Choose Customer to sign in.");
-      }
-      startSession(next);
-    },
+    async (email: string, password: string) => startSession(await authApi.login(email, password)),
     [startSession],
   );
 
