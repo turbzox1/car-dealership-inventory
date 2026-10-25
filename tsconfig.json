@@ -1,0 +1,12 @@
+{
+  // Used by Vercel to compile api/index.ts, which imports the backend's Express app
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["api"]
+}
