@@ -7,6 +7,8 @@ import { Vehicle } from './Vehicle';
  */
 export interface Purchase {
   id: string;
+  /** The order this line belongs to. */
+  orderId: string;
   userId: string;
   vehicleId: string;
   make: string;

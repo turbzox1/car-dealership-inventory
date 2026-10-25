@@ -27,5 +27,5 @@ export function createTestPrisma(): PrismaClient {
 
 /** Empties all tables so every test starts from a clean database. */
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE "Purchase", "Vehicle", "User" CASCADE');
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE "Purchase", "Order", "Vehicle", "User" CASCADE');
 }
