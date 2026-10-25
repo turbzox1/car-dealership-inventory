@@ -19,7 +19,7 @@ export function MyOrdersPage() {
         <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">My orders</h1>
         <p className="mt-2 text-[17px] text-slate-500">Every order you've placed, newest first.</p>
         {orders.status === 'ready' && orders.data.length > 0 && (
-          <p className="mt-1 text-sm font-medium text-ink-900">
+          <p className="mt-2 text-lg font-medium text-ink-900">
             {orders.data.length} {orders.data.length === 1 ? 'order' : 'orders'} · {formatPrice(spent)} spent
           </p>
         )}
@@ -35,7 +35,7 @@ export function MyOrdersPage() {
             </EmptyState>
           )}
           {orders.status === 'ready' && orders.data.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {orders.data.map((order) => (
                 <OrderCard key={order.id} order={order} />
               ))}
