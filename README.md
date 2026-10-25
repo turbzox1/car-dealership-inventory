@@ -6,7 +6,7 @@ A full-stack inventory system for a car dealership: customers browse a showroom 
 
 ![Showroom: category shortcuts, filters and vehicle cards with live stock](docs/screenshots/03-showroom.jpg)
 
-**Tests:** 232 backend + 87 frontend, all passing · **Coverage:** backend 98.6% statements, frontend 95.9% statements · [Full test report](docs/TEST_REPORT.md)
+**Tests:** 232 backend + 88 frontend, all passing · **Coverage:** backend 98.6% statements, frontend 95.9% statements · [Full test report](docs/TEST_REPORT.md)
 
 ---
 
@@ -197,7 +197,7 @@ cd frontend && npm test              # or npm run test:coverage
 | Suite | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|
 | Backend (Jest) | 232 / 232 | 98.61% | 93.41% | 100% | 98.91% |
-| Frontend (Vitest) | 87 / 87 | 95.87% | 90.81% | 95.67% | 97.2% |
+| Frontend (Vitest) | 88 / 88 | 95.87% | 90.81% | 95.67% | 97.2% |
 
 The [full test report](docs/TEST_REPORT.md) lists every test and per-file coverage.
 
