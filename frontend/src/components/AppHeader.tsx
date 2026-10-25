@@ -10,7 +10,7 @@ function NavItem({ to, children }: { to: string; children: string }) {
       to={to}
       end
       className={({ isActive }) =>
-        `whitespace-nowrap border-b-2 px-1 py-2 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors duration-150 ${
+        `whitespace-nowrap border-b-2 px-1 py-2 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors sm:text-[13px] sm:tracking-[0.12em] duration-150 ${
           isActive ? 'border-ink-900 text-ink-900' : 'border-transparent text-slate-500 hover:text-ink-900'
         }`
       }
@@ -60,7 +60,8 @@ export function AppHeader() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-paper/90 backdrop-blur-md">
       <div className="page flex flex-wrap items-center gap-x-10 gap-y-2 py-4">
         <Logo />
-        <nav aria-label="Main" className="order-last -mx-1 flex w-full gap-6 overflow-x-auto px-1 sm:order-none sm:w-auto">
+        {/* On phones the links take their own row and wrap rather than being cut off */}
+        <nav aria-label="Main" className="order-last flex w-full flex-wrap gap-x-5 gap-y-1 sm:order-none sm:w-auto sm:gap-x-6">
           <NavItem to="/">Showroom</NavItem>
           <NavItem to="/orders">My orders</NavItem>
           {isAdmin && <NavItem to="/admin/orders">All orders</NavItem>}
