@@ -18,6 +18,6 @@ const buttonBase =
 export const buttonPrimary = `${buttonBase} bg-ink-900 text-paper hover:bg-ink-800 focus-visible:ring-ink-900/20 disabled:bg-slate-200 disabled:text-slate-500`;
 export const buttonAccent = `${buttonBase} bg-accent-400 text-paper hover:bg-accent-300 focus-visible:ring-accent-400/40`;
 export const buttonGhost = `${buttonBase} text-slate-600 hover:bg-slate-100 hover:text-ink-900 focus-visible:ring-ink-900/10`;
-export const buttonDanger = `${buttonBase} bg-[#b93a27] text-white hover:bg-[#a33221] focus-visible:ring-rose-400/30 disabled:opacity-70`;
+export const buttonDanger = `${buttonBase} bg-[#c2412f] text-white hover:bg-[#a9372a] focus-visible:ring-rose-400/30 disabled:opacity-70`;
 
 export const labelClass = 'block text-[13px] font-semibold text-slate-600';
