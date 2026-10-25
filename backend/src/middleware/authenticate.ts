@@ -2,6 +2,7 @@ import { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthUser, UserLookup } from '../domain/User';
 import { UnauthorizedError } from '../domain/errors';
+import { JWT_ALGORITHM } from '../services/AuthService';
 
 export type { AuthUser, UserLookup };
 
@@ -26,7 +27,7 @@ export function createAuthenticate(jwtSecret: string, users: UserLookup): Reques
 
     let userId: string | undefined;
     try {
-      userId = (jwt.verify(token, jwtSecret) as jwt.JwtPayload).sub;
+      userId = (jwt.verify(token, jwtSecret, { algorithms: [JWT_ALGORITHM] }) as jwt.JwtPayload).sub;
     } catch {
       // Covers bad signature, malformed token and expiry alike
       return next(new UnauthorizedError('Invalid or expired token'));

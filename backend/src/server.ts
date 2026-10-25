@@ -15,7 +15,9 @@ const app = createApp({
   trustProxy: config.trustProxy,
 });
 
-const server = app.listen(config.port, () => console.log(`API listening on http://localhost:${config.port}`));
+const server = app.listen(config.port, config.host, () =>
+  console.log(`API listening on http://${config.host}:${config.port}`),
+);
 
 const shutdown = createGracefulShutdown({ server, disconnect: () => prisma.$disconnect(), timeoutMs: 10_000 });
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {

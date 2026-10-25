@@ -37,6 +37,8 @@ export interface ServerConfig {
   databaseUrl: string;
   jwtSecret: string;
   port: number;
+  /** Interface to listen on: localhost in development, all interfaces in production. */
+  host: string;
   corsOrigins: string[];
   /** Proxy hops in front of the app; false means X-Forwarded-For is ignored. */
   trustProxy: number | false;
@@ -61,6 +63,7 @@ export function loadServerConfig(env: Env): ServerConfig {
     databaseUrl: env.DATABASE_URL!,
     jwtSecret: env.JWT_SECRET!,
     port,
+    host: env.HOST || (env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'),
     // Comma-separated, e.g. "http://localhost:5173,https://my-app.vercel.app"
     corsOrigins: (env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((o) => o.trim()).filter(Boolean),
     trustProxy,

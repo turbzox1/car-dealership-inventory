@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { PublicUser, UserRecord } from '../domain/User';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../domain/errors';
@@ -6,6 +7,10 @@ import { UserRepository } from '../repositories/UserRepository';
 
 const SALT_ROUNDS = 10;
 const TOKEN_TTL = '1h';
+export const JWT_ALGORITHM = 'HS256';
+
+/** Hash of a random throwaway password: compared against when the email is unknown. */
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomUUID(), SALT_ROUNDS);
 
 export interface RegisterInput {
   name: string;
@@ -43,13 +48,15 @@ export class AuthService {
 
   async login(input: LoginInput): Promise<LoginResult> {
     const user = await this.users.findByEmail(input.email);
-    // Same error for unknown email and wrong password, so we don't leak which emails exist
-    const passwordMatches = user ? await bcrypt.compare(input.password, user.passwordHash) : false;
+    // Same error and the same bcrypt cost for unknown email and wrong password,
+    // so neither the message nor the response time reveals which emails exist
+    const passwordMatches = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_HASH);
     if (!user || !passwordMatches) {
       throw new UnauthorizedError('Invalid email or password');
     }
 
     const token = jwt.sign({ role: user.role }, this.jwtSecret, {
+      algorithm: JWT_ALGORITHM,
       subject: user.id,
       expiresIn: TOKEN_TTL,
     });

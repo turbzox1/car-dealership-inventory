@@ -1,4 +1,5 @@
 import cors from 'cors';
+import helmet from 'helmet';
 import express, { Express } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthController } from './controllers/AuthController';
@@ -41,7 +42,15 @@ export function createApp({
   app.set('trust proxy', trustProxy);
   app.disable('x-powered-by');
   app.use(cors({ origin: corsOrigins }));
-  app.use(express.json());
+  // JSON-only API: nothing should ever be framed, run scripts or send a referrer
+  app.use(
+    helmet({
+      contentSecurityPolicy: { useDefaults: false, directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
+      frameguard: { action: 'deny' },
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
+  app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
