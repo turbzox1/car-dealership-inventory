@@ -1,6 +1,7 @@
 // Collects freely licensed photos for the sample vehicles from Wikimedia Commons.
 //
-//   node scripts/fetch-vehicle-photos.mjs   ->  writes prisma/vehicle-photos.json
+//   WIKIMEDIA_CONTACT=you@example.com node scripts/fetch-vehicle-photos.mjs
+//     -> writes prisma/vehicle-photos.json
 //
 // For each model: the lead image of its Wikipedia article (usually a current,
 // clean exterior shot) plus up to 3 recent Commons photos. Only CC0 / public
@@ -10,7 +11,13 @@
 
 import { writeFileSync } from 'node:fs';
 
-const USER_AGENT = 'AutoVaultDemo/1.0 (car dealership kata; contact: you@example.com)';
+// Wikimedia's User-Agent policy asks for a way to contact the operator; supply your own.
+const CONTACT = process.env.WIKIMEDIA_CONTACT;
+if (!CONTACT) {
+  console.error('Set WIKIMEDIA_CONTACT (an email or URL Wikimedia can reach you at), e.g.\n  WIKIMEDIA_CONTACT=you@example.com node scripts/fetch-vehicle-photos.mjs');
+  process.exit(1);
+}
+const USER_AGENT = `AutoVaultDemo/1.0 (car dealership kata; contact: ${CONTACT})`;
 const PER_VEHICLE = 4;
 const FREE_LICENSE = /^(CC0|Public domain|PD|CC BY(-SA)? \d)/i;
 

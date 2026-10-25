@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     // In development the API is reached through Vite, so no CORS setup is needed locally
-    proxy: { '/api': 'http://localhost:4000' },
+    proxy: { '/api': 'http://127.0.0.1:4000' },
   },
   test: {
     environment: 'jsdom',
