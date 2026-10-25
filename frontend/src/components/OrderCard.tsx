@@ -9,7 +9,7 @@ export function OrderCard({ order }: { order: Order }) {
   const td = 'px-5 py-3 text-[15px] text-slate-600';
 
   return (
-    <article aria-label={`Order #${number}`} className="overflow-hidden rounded-3xl border border-slate-200 bg-card">
+    <article aria-label={`Order #${number}`} className="overflow-hidden border border-slate-200 bg-card">
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-slate-200 px-5 py-4">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h2 className="font-mono text-sm font-medium text-ink-900">Order #{number}</h2>

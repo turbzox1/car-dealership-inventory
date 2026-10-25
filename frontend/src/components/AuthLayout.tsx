@@ -1,49 +1,60 @@
 import type { ReactNode } from 'react';
-import { Logo } from './Logo';
-import { SketchCar } from './SketchCar';
-
-const TAGS = ['live stock', 'no double-selling', 'one-click buy'];
+import { HERO_PHOTO } from './heroPhoto';
+import { Logo, LogoMark } from './Logo';
 
 /**
- * Editorial split layout for sign-in and sign-up: the pitch with a sketched
- * car on the left, the form on a card on the right. Stacks on small screens.
+ * Sign-in / sign-up: a full-height photo panel with the pitch on the left and
+ * the form on the right. On small screens the photo becomes a short banner.
  */
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: ReactNode; children: ReactNode }) {
   return (
-    <div className="min-h-screen">
-      <header className="mx-auto flex max-w-[1320px] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
-        <Logo />
-        <span className="hidden font-mono text-xs text-slate-500 sm:block">Dealer inventory · est. 2026</span>
-      </header>
+    <div className="grid min-h-screen lg:grid-cols-[1.2fr_1fr]">
+      <section
+        aria-label="About AutoVault"
+        className="relative flex min-h-[260px] flex-col justify-between overflow-hidden bg-ink-900 p-6 text-white sm:p-10 lg:min-h-screen lg:p-14"
+      >
+        <img src={HERO_PHOTO.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        {/* Dark overlay keeps white text well above AA contrast over any part of the photo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/40" aria-hidden="true" />
 
-      <div className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 pb-16 pt-4 sm:px-8 lg:px-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:pt-10">
-        <section className="rise order-2 lg:order-1" aria-label="About AutoVault">
-          <span className="eyebrow">Dealer console</span>
-          <p className="display mt-6 text-[2.6rem] leading-[1.02] text-ink-900 sm:text-6xl">
-            Your showroom,
-            <br />
-            <span className="font-script text-[1.12em] font-bold tracking-normal text-accent-600">always in stock.</span>
-          </p>
-          <p className="mt-5 max-w-md text-[17px] leading-relaxed text-slate-500">
-            Track every car on the lot, sell without ever double-booking the last one, and keep stock honest in real
-            time.
-          </p>
-          <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[13px] text-accent-600">
-            {TAGS.map((tag) => (
-              <li key={tag}>{tag}</li>
-            ))}
-          </ul>
-          <SketchCar className="mt-8 w-full max-w-lg" />
-        </section>
+        <span className="relative inline-flex items-center gap-2 text-white">
+          <LogoMark className="h-8 w-8" />
+          <span className="display text-[22px]">autovault</span>
+        </span>
 
-        <main className="rise order-1 lg:order-2">
-          <div className="mx-auto w-full max-w-md rounded-[28px] border border-slate-200 bg-card p-7 shadow-[0_1px_0_rgba(27,25,21,0.04),0_24px_48px_-28px_rgba(27,25,21,0.25)] sm:p-9">
-            <h1 className="display text-4xl text-ink-900">{title}</h1>
-            <p className="mt-2 text-[15px] text-slate-500">{subtitle}</p>
-            <div className="mt-8">{children}</div>
+        <div className="relative max-w-xl">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-white/75">Dealer showroom</p>
+          <p className="display mt-4 text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
+            New cars. Real stock. No surprises.
+          </p>
+          <p className="mt-4 max-w-md text-[17px] leading-relaxed text-white/85">
+            Browse 30+ models from the brands you trust, see exactly what's on the lot, and reserve yours in a few
+            clicks.
+          </p>
+        </div>
+
+        <p className="relative text-[11px] text-white/65">
+          Photo:{' '}
+          <a href={HERO_PHOTO.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            {HERO_PHOTO.author}
+          </a>{' '}
+          ·{' '}
+          <a href={HERO_PHOTO.licenseUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            {HERO_PHOTO.license}
+          </a>
+        </p>
+      </section>
+
+      <main className="flex items-center justify-center bg-white px-5 py-12 sm:px-10">
+        <div className="rise w-full max-w-md">
+          <div className="mb-10 hidden lg:block">
+            <Logo />
           </div>
-        </main>
-      </div>
+          <h1 className="display text-4xl text-ink-900">{title}</h1>
+          <p className="mt-2 text-[15px] text-slate-500">{subtitle}</p>
+          <div className="mt-8">{children}</div>
+        </div>
+      </main>
     </div>
   );
 }

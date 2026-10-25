@@ -1,25 +1,27 @@
 @import "tailwindcss";
 
 /*
- * AutoVault design tokens (light): cool off-white page, white cards, dark navy ink,
- * an amber accent and a touch of teal. Names are roles, not colours ("paper" is the
- * page, "ink" the main text). Text pairings checked against WCAG AA on page/card/panel:
- *   ink 15.8–17.9 · slate-600 9.2+ · slate-500 5.1+ · accent-600 5.2+ · teal-700 5.3+ · rose-700 5.8+
+ * AutoVault design tokens: a clean, photo-led dealership look (white and near-black,
+ * crisp grotesque type, one amber accent used sparingly). Names are roles, not colours
+ * ("paper" is the page, "ink" the main text). Text pairings checked against WCAG AA:
+ *   ink on white 18.9 · slate-600 on white 11.2 · slate-500 on white 6.7 (6.1 on panels) ·
+ *   accent-600 on white 5.9 · teal-700 on white 6.0 · rose-700 on white 6.6 ·
+ *   white on ink 18.9 · white on the hero photo overlay (≥ 60% black) ≥ 7
  * slate-400 is for placeholders, borders and icons only, never body text.
  */
 @theme {
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo", "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-script: "Caveat", "Segoe Script", cursive;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   /* Page, raised surfaces and ink */
-  --color-paper: #f4f6fa;
+  --color-paper: #ffffff;
   --color-card: #ffffff;
-  --color-ink-950: #020617;
-  --color-ink-900: #0f172a;
-  --color-ink-800: #1e293b;
-  --color-ink-700: #334155;
+  --color-ink-950: #000000;
+  --color-ink-900: #111111;
+  --color-ink-800: #262626;
+  --color-ink-700: #404040;
 
   /* Amber accent: 300–500 for fills and drawings, 600 for text */
   --color-accent-300: #fbdc9a;
@@ -32,17 +34,17 @@
   --color-teal-500: #14a394;
   --color-teal-700: #0f6f66;
 
-  /* Cool neutrals, light to dark */
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #eef1f6;
-  --color-slate-200: #e1e6ee;
-  --color-slate-300: #cbd3df;
-  --color-slate-400: #7b8597;
-  --color-slate-500: #5b6678;
-  --color-slate-600: #334155;
-  --color-slate-700: #273449;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
+  /* Neutral greys, light to dark */
+  --color-slate-50: #fafaf9;
+  --color-slate-100: #f4f4f2;
+  --color-slate-200: #e7e6e3;
+  --color-slate-300: #d3d1cc;
+  --color-slate-400: #8a877f;
+  --color-slate-500: #5f5c55;
+  --color-slate-600: #3d3b37;
+  --color-slate-700: #2c2a27;
+  --color-slate-800: #1f1e1c;
+  --color-slate-900: #111111;
 
   /* Errors: soft tinted surfaces with dark red text */
   --color-rose-50: #fef3f2;
@@ -62,29 +64,30 @@ body {
   @apply bg-paper font-sans text-ink-900 antialiased;
 }
 
-/* Display headings: heavy and tight, like a magazine cover */
+/* Display headings: large, clean and tightly tracked */
 .display {
-  @apply font-display font-extrabold tracking-[-0.035em];
+  @apply font-display font-semibold tracking-[-0.03em];
 }
 
-/* Small uppercase label with a status dot, e.g. "● Dealer console" */
+/* Small uppercase section label, e.g. "INVENTORY" */
 .eyebrow {
-  @apply inline-flex items-center gap-2 rounded-full border border-slate-200 bg-card px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500;
+  @apply inline-block text-[12px] font-semibold uppercase tracking-[0.18em] text-slate-500;
 }
-.eyebrow::before {
-  content: "";
-  @apply h-1.5 w-1.5 rounded-full bg-teal-500;
+
+/* Full-width page container with generous but not wasteful side margins */
+.page {
+  @apply mx-auto w-full max-w-[1760px] px-5 sm:px-8 lg:px-12 2xl:px-16;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .rise {
-    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
 }

@@ -23,6 +23,17 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   EV: 'Electric',
 };
 
+/** A freely licensed photo and the credit its license requires. */
+export interface VehicleImage {
+  url: string;
+  thumbUrl: string;
+  title: string;
+  author: string;
+  license: string;
+  licenseUrl: string | null;
+  sourceUrl: string;
+}
+
 export interface Vehicle {
   id: string;
   make: string;
@@ -30,6 +41,13 @@ export interface Vehicle {
   category: Category;
   price: number;
   quantity: number;
+  /** Basic details; older or admin-added cars may not have them. */
+  year?: number | null;
+  fuelType?: string | null;
+  transmission?: string | null;
+  seats?: number | null;
+  description?: string | null;
+  images?: VehicleImage[];
 }
 
 /** Search filters as typed by the user; empty strings mean "not set". */

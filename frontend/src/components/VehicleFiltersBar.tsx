@@ -19,7 +19,7 @@ export function VehicleFiltersBar({ filters, onChange, onClear, canClear, priceE
     onChange({ ...filters, [key]: e.target.value });
 
   return (
-    <section aria-label="Search and filters" className="rounded-3xl border border-slate-200 bg-card p-4 sm:p-5">
+    <section aria-label="Search and filters" className="border border-slate-200 bg-card p-4 sm:p-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1fr_0.8fr_0.8fr]">
         <label className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
           Make

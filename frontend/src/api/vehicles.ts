@@ -16,6 +16,10 @@ export function fetchVehicles(call: ApiCall, filters: VehicleFilters): Promise<V
   return call<Vehicle[]>(`/api/vehicles/search?${params}`);
 }
 
+export function fetchVehicle(call: ApiCall, id: string): Promise<Vehicle> {
+  return call<Vehicle>(`/api/vehicles/${encodeURIComponent(id)}`);
+}
+
 export interface PurchaseResult {
   purchase: { id: string; quantity: number; totalPrice: number };
   vehicle: Vehicle;

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { fetchMyOrders } from '../api/orders';
 import { AppHeader } from '../components/AppHeader';
+import { SiteFooter } from '../components/SiteFooter';
 import { OrderCard } from '../components/OrderCard';
 import { EmptyState, LoadError, LoadingRows } from '../components/PageStates';
 import { formatPrice } from '../format';
@@ -11,9 +12,9 @@ export function MyOrdersPage() {
   const spent = orders.status === 'ready' ? orders.data.reduce((sum, o) => sum + o.total, 0) : 0;
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <AppHeader />
-      <main className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12 sm:py-14">
+      <main className="page flex-1 py-10 sm:py-14">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <span className="eyebrow">Purchase history</span>
@@ -46,6 +47,7 @@ export function MyOrdersPage() {
           )}
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

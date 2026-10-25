@@ -85,7 +85,7 @@ describe('My orders', () => {
     storeSession();
     const { user } = renderApp('/');
 
-    await user.click(await screen.findByRole('link', { name: /my orders/i }));
+    await user.click(within(await screen.findByRole('banner')).getByRole('link', { name: /my orders/i }));
 
     expect(await screen.findByRole('heading', { name: /my orders/i })).toBeInTheDocument();
   });

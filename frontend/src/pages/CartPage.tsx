@@ -5,6 +5,7 @@ import { checkout, orderNumber } from '../api/orders';
 import { useApi } from '../api/useApi';
 import { useCart } from '../cart/useCart';
 import { AppHeader } from '../components/AppHeader';
+import { SiteFooter } from '../components/SiteFooter';
 import { FormAlert } from '../components/form';
 import { EmptyState } from '../components/PageStates';
 import { SketchCar } from '../components/SketchCar';
@@ -23,7 +24,7 @@ function CartLine({ item }: { item: CartItem }) {
   const name = `${item.make} ${item.model}`;
   return (
     <li aria-label={name} className="flex flex-wrap items-center gap-x-5 gap-y-3 py-5 first:pt-0 last:pb-0">
-      <div className="w-24 shrink-0 rounded-2xl bg-slate-100/70 px-2 py-2">
+      <div className="w-24 shrink-0 bg-slate-100/70 px-2 py-2">
         <SketchCar withScene={false} wash="var(--color-accent-300)" className="h-10 w-auto" />
       </div>
       <div className="min-w-0 flex-1">
@@ -62,7 +63,7 @@ function CartLine({ item }: { item: CartItem }) {
 
 function Confirmation({ order }: { order: Order }) {
   return (
-    <section className="rise mx-auto max-w-xl rounded-3xl border border-slate-200 bg-card px-8 py-12 text-center">
+    <section className="rise mx-auto max-w-xl border border-slate-200 bg-card px-8 py-12 text-center">
       <span className="eyebrow">Order placed</span>
       <h1 className="display mt-5 text-4xl text-ink-900">Order confirmed</h1>
       <p className="mt-3 text-slate-500">
@@ -105,9 +106,9 @@ export function CartPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <AppHeader />
-      <main className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12 sm:py-14">
+      <main className="page flex-1 py-10 sm:py-14">
         {confirmed ? (
           <Confirmation order={confirmed} />
         ) : (
@@ -125,13 +126,13 @@ export function CartPage() {
               </div>
             ) : (
               <div className="mt-8 grid items-start gap-6 lg:grid-cols-[1fr_22rem]">
-                <ul className="divide-y divide-slate-200 rounded-3xl border border-slate-200 bg-card p-6">
+                <ul className="divide-y divide-slate-200 border border-slate-200 bg-card p-6">
                   {cart.items.map((item) => (
                     <CartLine key={item.vehicleId} item={item} />
                   ))}
                 </ul>
 
-                <aside className="rounded-3xl border border-slate-200 bg-card p-6 lg:sticky lg:top-24">
+                <aside className="border border-slate-200 bg-card p-6 lg:sticky lg:top-24">
                   <h2 className="display text-xl text-ink-900">Summary</h2>
                   <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-slate-200 pt-4">
                     <span className="text-slate-500">Subtotal</span>
@@ -160,6 +161,7 @@ export function CartPage() {
           </>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }

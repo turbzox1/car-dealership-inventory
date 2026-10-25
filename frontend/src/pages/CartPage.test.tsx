@@ -10,7 +10,8 @@ const golf = { id: 'v-golf', make: 'Volkswagen', model: 'Golf', category: 'HATCH
 
 const cartKey = (userId = asha.id) => `autovault.cart.${userId}`;
 const card = (name: RegExp) => screen.getByRole('article', { name });
-const cartLink = () => screen.getByRole('link', { name: /cart/i });
+// The header's cart link (the footer has a text link to the cart too)
+const cartLink = () => within(screen.getByRole('banner')).getByRole('link', { name: /cart/i });
 
 function storeCart(items: { vehicleId: string; quantity: number }[], userId = asha.id) {
   const byId = { [civic.id]: civic, [crv.id]: crv, [golf.id]: golf };
@@ -45,7 +46,7 @@ describe('Adding to the cart', () => {
 
     unmount();
     renderApp('/');
-    expect(await screen.findByRole('link', { name: /cart, 2 items/i })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('banner')).findByRole('link', { name: /cart, 2 items/i })).toBeInTheDocument();
   });
 
   it('never puts more in the cart than is in stock', async () => {

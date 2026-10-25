@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { controlClass } from '../components/styles';
 import { fetchAllOrders } from '../api/orders';
 import { AppHeader } from '../components/AppHeader';
+import { SiteFooter } from '../components/SiteFooter';
 import { OrderCard } from '../components/OrderCard';
 import { EmptyState, LoadError, LoadingRows } from '../components/PageStates';
 import { formatPrice } from '../format';
@@ -17,7 +18,7 @@ function matches(order: Order, query: string): boolean {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-card px-6 py-5">
+    <div className="border border-slate-200 bg-card px-6 py-5">
       <p className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">{label}</p>
       <p className="display mt-2 text-3xl text-ink-900">{value}</p>
     </div>
@@ -35,9 +36,9 @@ export function AllOrdersPage() {
   const units = all.reduce((sum, o) => sum + o.items.reduce((n, i) => n + i.quantity, 0), 0);
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <AppHeader />
-      <main className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12 sm:py-14">
+      <main className="page flex-1 py-10 sm:py-14">
         <span className="eyebrow">Admin</span>
         <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">All orders</h1>
         <p className="mt-2 text-[17px] text-slate-500">Every sale across the showroom.</p>
@@ -77,6 +78,7 @@ export function AllOrdersPage() {
           )}
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

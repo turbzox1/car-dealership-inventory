@@ -44,7 +44,7 @@ export function Dialog({ title, onClose, children, tone = 'default' }: DialogPro
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="rise w-full max-w-lg overflow-hidden rounded-t-[28px] border border-slate-200 bg-card shadow-[0_30px_60px_-30px_rgba(27,25,21,0.5)] sm:rounded-[28px]"
+        className="rise w-full max-w-lg overflow-hidden border border-slate-200 bg-card shadow-[0_30px_60px_-30px_rgba(27,25,21,0.5)]"
       >
         <div className="flex items-start justify-between gap-4 px-7 pt-6">
           <h2 id={titleId} className={`display text-2xl ${tone === 'danger' ? 'text-rose-800' : 'text-ink-900'}`}>

@@ -4,7 +4,8 @@ import type { User } from '../types';
 export interface AuthContextValue {
   user: User | null;
   token: string | null;
-  login(email: string, password: string): Promise<void>;
+  /** With `requireAdmin`, a non-admin account is refused and no session is started. */
+  login(email: string, password: string, options?: { requireAdmin?: boolean }): Promise<void>;
   /** Creates the account, then signs in with the same credentials. */
   register(name: string, email: string, password: string): Promise<void>;
   logout(): void;

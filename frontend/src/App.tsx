@@ -6,6 +6,7 @@ import { CartPage } from './pages/CartPage';
 import { AllOrdersPage } from './pages/AllOrdersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
+import { VehicleDetailPage } from './pages/VehicleDetailPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -19,6 +20,7 @@ export function AppRoutes() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/vehicles/:id" element={<VehicleDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route element={<RequireAdmin />}>

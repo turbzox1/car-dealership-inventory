@@ -67,7 +67,7 @@ export function SelectField({ label, error, className = '', children, ...select 
 /** Form-level error from the server, announced to screen readers. */
 export function FormAlert({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+    <div role="alert" className="border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       {children}
     </div>
   );
