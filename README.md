@@ -256,6 +256,4 @@ Every commit where AI helped carries the trailer `Co-authored-by: Claude <norepl
 
 ### Reflection
 
-> ✍️ **Draft: rewrite this in your own words before submitting.**
-
-AI made the project much faster: scaffolding, test suites and UI that would have taken days took hours. What mattered most was not code generation but keeping the AI honest. Asking for a review that challenged the work found that a passing concurrency test proved nothing, and checking features in a real browser found a bug that every test had missed. Making the important decisions myself and asking "why" at each step meant I understood the design rather than just receiving it. The main risk I saw is trusting green tests without asking what they actually prove.
+Using AI made development faster, but I learned that getting code to work is only part of the job. I still needed to question decisions, understand the code, and check whether the tests actually proved anything. One important lesson was discovering that a passing test could miss a real concurrency bug. Testing the app in a browser also helped me catch issues automated tests missed. Overall, AI was a useful development partner, but reviewing, testing, and understanding what I built remained my responsibility.
