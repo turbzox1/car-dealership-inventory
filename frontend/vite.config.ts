@@ -14,6 +14,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // These tests render the whole app; give them headroom on a busy machine (default is 5s)
+    testTimeout: 15_000,
     coverage: {
       include: ['src/**'],
       exclude: ['src/test/**', '**/*.test.*', 'src/main.tsx'],

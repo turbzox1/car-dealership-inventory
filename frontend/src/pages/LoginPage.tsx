@@ -21,7 +21,7 @@ function RolePicker({ value, onChange }: { value: Role; onChange(role: Role): vo
         <label
           key={role.value}
           className={`cursor-pointer px-4 py-3 text-center transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ink-900 ${
-            value === role.value ? 'bg-ink-900 text-white' : 'bg-white text-ink-900 hover:bg-slate-100'
+            value === role.value ? 'bg-ink-900 text-paper' : 'bg-transparent text-ink-900 hover:bg-slate-100'
           }`}
         >
           <input
@@ -33,7 +33,7 @@ function RolePicker({ value, onChange }: { value: Role; onChange(role: Role): vo
             className="sr-only"
           />
           <span className="block text-[13px] font-semibold uppercase tracking-[0.1em]">{role.label}</span>
-          <span className={`block text-xs ${value === role.value ? 'text-white/70' : 'text-slate-500'}`}>{role.hint}</span>
+          <span className={`block text-xs ${value === role.value ? 'text-paper/70' : 'text-slate-500'}`}>{role.hint}</span>
         </label>
       ))}
     </div>

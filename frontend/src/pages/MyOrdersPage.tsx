@@ -15,20 +15,16 @@ export function MyOrdersPage() {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
       <main className="page flex-1 py-10 sm:py-14">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <span className="eyebrow">Purchase history</span>
-            <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">My orders</h1>
-            <p className="mt-2 text-[17px] text-slate-500">Every order you've placed, newest first.</p>
-          </div>
-          {orders.status === 'ready' && orders.data.length > 0 && (
-            <p className="font-mono text-xs text-slate-500">
-              {orders.data.length} {orders.data.length === 1 ? 'order' : 'orders'} · {formatPrice(spent)} spent
-            </p>
-          )}
-        </div>
+        <span className="eyebrow">Purchase history</span>
+        <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">My orders</h1>
+        <p className="mt-2 text-[17px] text-slate-500">Every order you've placed, newest first.</p>
+        {orders.status === 'ready' && orders.data.length > 0 && (
+          <p className="mt-1 text-sm font-medium text-ink-900">
+            {orders.data.length} {orders.data.length === 1 ? 'order' : 'orders'} · {formatPrice(spent)} spent
+          </p>
+        )}
 
-        <section className="mt-6" aria-label="Orders">
+        <section className="mt-8" aria-label="Orders">
           {orders.status === 'loading' && <LoadingRows label="Loading orders" />}
           {orders.status === 'error' && <LoadError what="your orders" error={orders.error} onRetry={reload} />}
           {orders.status === 'ready' && orders.data.length === 0 && (

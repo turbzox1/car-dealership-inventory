@@ -30,7 +30,7 @@ function CartLink() {
       aria-label={label}
       className={({ isActive }) =>
         `relative inline-flex h-10 w-10 items-center justify-center border transition-colors duration-150 ${
-          isActive ? 'border-ink-900 bg-ink-900 text-white' : 'border-slate-300 text-ink-900 hover:border-ink-900'
+          isActive ? 'border-ink-900 bg-ink-900 text-paper' : 'border-slate-300 text-ink-900 hover:border-ink-900'
         }`
       }
     >
@@ -57,7 +57,7 @@ export function AppHeader() {
   const isAdmin = user?.role === 'ADMIN';
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-paper/90 backdrop-blur-md">
       <div className="page flex flex-wrap items-center gap-x-10 gap-y-2 py-4">
         <Logo />
         <nav aria-label="Main" className="order-last -mx-1 flex w-full gap-6 overflow-x-auto px-1 sm:order-none sm:w-auto">

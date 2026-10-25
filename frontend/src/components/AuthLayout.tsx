@@ -11,7 +11,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
     <div className="grid min-h-screen lg:grid-cols-[1.2fr_1fr]">
       <section
         aria-label="About AutoVault"
-        className="relative flex min-h-[260px] flex-col justify-between overflow-hidden bg-ink-900 p-6 text-white sm:p-10 lg:min-h-screen lg:p-14"
+        className="relative flex min-h-[260px] flex-col justify-between overflow-hidden bg-black p-6 text-white sm:p-10 lg:min-h-screen lg:p-14"
       >
         <img src={HERO_PHOTO.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
         {/* Dark overlay keeps white text well above AA contrast over any part of the photo */}
@@ -45,7 +45,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         </p>
       </section>
 
-      <main className="flex items-center justify-center bg-white px-5 py-12 sm:px-10">
+      <main className="flex items-center justify-center bg-paper px-5 py-12 sm:px-10">
         <div className="rise w-full max-w-md">
           <div className="mb-10 hidden lg:block">
             <Logo />

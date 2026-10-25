@@ -8,7 +8,7 @@ export function SiteFooter() {
   const heading = 'text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60';
   const link = 'text-[15px] text-white/85 hover:text-white';
   return (
-    <footer className="mt-20 bg-ink-900 text-white">
+    <footer className="mt-20 border-t border-slate-200 bg-black text-white">
       <div className="page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <span className="inline-flex items-center gap-2 text-white">

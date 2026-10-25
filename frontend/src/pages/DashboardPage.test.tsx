@@ -140,10 +140,14 @@ describe('Dashboard: purchasing', () => {
   it('prevents a double purchase while the request is in flight', async () => {
     mockCatalogue();
     let calls = 0;
+    // The response is held until the test releases it, so the "in flight" window
+    // doesn't depend on how fast the machine is
+    let release!: () => void;
+    const responded = new Promise<void>((resolve) => (release = resolve));
     server.use(
       http.post(apiUrl('/api/vehicles/v-civic/purchase'), async () => {
         calls++;
-        await delay(100);
+        await responded;
         return HttpResponse.json({ purchase: { id: 'p' }, vehicle: { ...civic, quantity: 2 } }, { status: 201 });
       }),
     );
@@ -154,6 +158,7 @@ describe('Dashboard: purchasing', () => {
     await user.click(button);
 
     expect(within(card('civic')).getByRole('button', { name: /buying/i })).toBeDisabled();
+    release();
     await within(card('civic')).findByText(/2 in stock/i);
     expect(calls).toBe(1);
   });

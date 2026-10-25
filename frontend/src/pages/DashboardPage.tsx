@@ -50,7 +50,7 @@ function priceRangeError({ minPrice, maxPrice }: VehicleFilters): string | undef
 function CategoryShortcuts({ selected, onSelect }: { selected: Category | ''; onSelect(category: Category | ''): void }) {
   const item = (active: boolean) =>
     `whitespace-nowrap border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors ${
-      active ? 'border-ink-900 bg-ink-900 text-white' : 'border-slate-300 text-slate-600 hover:border-ink-900 hover:text-ink-900'
+      active ? 'border-ink-900 bg-ink-900 text-paper' : 'border-slate-300 text-slate-600 hover:border-ink-900 hover:text-ink-900'
     }`;
   return (
     <nav aria-label="Body styles" className="-mx-1 mt-8 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -68,14 +68,14 @@ function CategoryShortcuts({ selected, onSelect }: { selected: Category | ''; on
 
 const REASONS = [
   ['Live stock', 'What you see is on the lot right now. Stock updates the moment a car is sold.'],
-  ['Fair checkout', 'Your whole order goes through together or not at all, and two buyers can never get the same last car.'],
+  ['Easy ordering', 'Add the cars you like to your cart, confirm in one step, and find every order in your history.'],
   ['Transparent prices', 'One clear price per car, with the details and photos to compare before you buy.'],
 ] as const;
 
 /** Dark band with the dealership's promises, breaking up the page like a real showroom site. */
 function WhyBuyHere() {
   return (
-    <section aria-label="Why buy with us" className="bg-ink-900 text-white">
+    <section aria-label="Why buy with us" className="border-y border-slate-200 bg-card text-white">
       <div className="page grid gap-10 py-16 sm:py-20 lg:grid-cols-[1fr_2fr]">
         <h2 className="display text-3xl leading-tight sm:text-4xl">Why buy with AutoVault</h2>
         <div className="grid gap-8 sm:grid-cols-3">
@@ -200,7 +200,7 @@ export function DashboardPage() {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <section aria-label="Introduction" className="relative isolate overflow-hidden bg-ink-900 text-white">
+      <section aria-label="Introduction" className="relative isolate overflow-hidden bg-black text-white">
         <img src={HERO_PHOTO.url} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
         {/* Overlay keeps the white text well above AA contrast anywhere on the photo */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/85 via-black/60 to-black/25" aria-hidden="true" />
@@ -218,11 +218,10 @@ export function DashboardPage() {
               Browse inventory
             </a>
           </div>
-          <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-white/20 pt-6">
+          <dl className="mt-14 grid max-w-md grid-cols-2 gap-6 border-t border-white/20 pt-6">
             {[
               [load.status === 'ready' && !filtering ? String(vehicles.length) : '30+', 'Models on the lot'],
               ['8', 'Body styles'],
-              ['All-or-nothing', 'Checkout'],
             ].map(([value, label]) => (
               <div key={label}>
                 <dt className="text-[12px] uppercase tracking-[0.14em] text-white/70">{label}</dt>

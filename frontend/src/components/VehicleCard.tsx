@@ -49,11 +49,11 @@ export function VehicleCard({ vehicle, buying, onPurchase, inCart, onAddToCart, 
           vehicle={vehicle}
           className="aspect-[4/3] w-full transition-transform duration-500 motion-safe:group-hover:scale-[1.03]"
         />
-        <span className="absolute left-3 top-3 bg-white/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-900">
+        <span className="absolute left-3 top-3 bg-black/75 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
           {CATEGORY_LABELS[vehicle.category]}
         </span>
         {soldOut && (
-          <span className="absolute right-3 top-3 bg-ink-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+          <span className="absolute right-3 top-3 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-black">
             Sold out
           </span>
         )}
