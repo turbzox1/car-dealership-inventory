@@ -1,10 +1,17 @@
 import { Prisma, PrismaClient, Vehicle as VehicleRow } from '@prisma/client';
-import { NewVehicle, Vehicle, VehicleSearch, VehicleUpdate } from '../domain/Vehicle';
+import { FuelType, NewVehicle, Transmission, Vehicle, VehicleImage, VehicleSearch, VehicleUpdate } from '../domain/Vehicle';
 import { VehicleRepository } from './VehicleRepository';
 
 /** Prisma returns NUMERIC as Decimal; the API exposes plain numbers. The archive flag stays internal. */
 export function toVehicle({ isArchived: _archived, ...row }: VehicleRow): Vehicle {
-  return { ...row, price: row.price.toNumber() };
+  return {
+    ...row,
+    price: row.price.toNumber(),
+    // Stored as plain strings/JSON; validated on the way in (API schemas and the curated seed)
+    fuelType: row.fuelType as FuelType | null,
+    transmission: row.transmission as Transmission | null,
+    images: row.images as unknown as VehicleImage[],
+  };
 }
 
 function isNotFound(err: unknown): boolean {
@@ -25,6 +32,11 @@ export class PrismaVehicleRepository implements VehicleRepository {
   async findAll(): Promise<Vehicle[]> {
     const rows = await this.prisma.vehicle.findMany({ where: ACTIVE, orderBy: { createdAt: 'desc' } });
     return rows.map(toVehicle);
+  }
+
+  async findById(id: string): Promise<Vehicle | null> {
+    const row = await this.prisma.vehicle.findFirst({ where: { id, ...ACTIVE } });
+    return row ? toVehicle(row) : null;
   }
 
   async search({ make, model, category, minPrice, maxPrice }: VehicleSearch): Promise<Vehicle[]> {

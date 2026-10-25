@@ -16,7 +16,8 @@ export class InMemoryInventoryRepository implements InventoryRepository {
     const now = new Date();
     const vehicle: Vehicle = {
       id: randomUUID(), make: 'Honda', model: 'Civic', category: 'SEDAN',
-      price: 24000, quantity: 1, createdAt: now, updatedAt: now, ...overrides,
+      price: 24000, quantity: 1, createdAt: now, updatedAt: now, images: [],
+      year: null, fuelType: null, transmission: null, seats: null, description: null, ...overrides,
     };
     this.vehicles.push(vehicle);
     return vehicle;

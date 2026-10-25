@@ -9,9 +9,17 @@ export class InMemoryVehicleRepository implements VehicleRepository {
 
   async create(input: NewVehicle): Promise<Vehicle> {
     const now = new Date();
-    const vehicle: Vehicle = { id: randomUUID(), createdAt: now, updatedAt: now, ...input };
+    const vehicle: Vehicle = {
+      id: randomUUID(), createdAt: now, updatedAt: now, images: [],
+      year: null, fuelType: null, transmission: null, seats: null, description: null,
+      ...input,
+    };
     this.vehicles.push(vehicle);
     return vehicle;
+  }
+
+  async findById(id: string): Promise<Vehicle | null> {
+    return this.vehicles.find((v) => v.id === id) ?? null;
   }
 
   async findAll(): Promise<Vehicle[]> {

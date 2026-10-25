@@ -80,7 +80,7 @@ describe('seedDatabase', () => {
       expect(images.length).toBeGreaterThan(0);
       for (const image of images) {
         expect(image).toMatchObject({
-          url: expect.stringMatching(/^https:\/\/upload\.wikimedia\.org\//),
+          url: expect.stringMatching(/^https:\/\/(upload|thumb)\.wikimedia\.org\/[^?]+$/),
           author: expect.any(String),
           license: expect.any(String),
           sourceUrl: expect.stringMatching(/^https:\/\/commons\.wikimedia\.org\//),

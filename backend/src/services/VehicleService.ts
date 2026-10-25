@@ -10,6 +10,12 @@ export class VehicleService {
     return this.vehicles.create(input);
   }
 
+  async get(id: string): Promise<Vehicle> {
+    const vehicle = await this.vehicles.findById(id);
+    if (!vehicle) throw new NotFoundError('Vehicle not found');
+    return vehicle;
+  }
+
   list(): Promise<Vehicle[]> {
     return this.vehicles.findAll();
   }

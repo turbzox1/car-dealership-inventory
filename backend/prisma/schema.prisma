@@ -35,17 +35,25 @@ model User {
 }
 
 model Vehicle {
-  id         String     @id @default(uuid())
-  make       String
-  model      String
-  category   Category
-  price      Decimal    @db.Decimal(12, 2)
-  quantity   Int        @default(0) // CHECK (quantity >= 0) is added in migration SQL
+  id           String     @id @default(uuid())
+  make         String
+  model        String
+  category     Category
+  price        Decimal    @db.Decimal(12, 2)
+  quantity     Int        @default(0) // CHECK (quantity >= 0) is added in migration SQL
   // Soft delete: archived vehicles are hidden but purchase history stays intact
-  isArchived Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  purchases  Purchase[]
+  isArchived   Boolean    @default(false)
+  // Basic details shown on the vehicle page (optional: admins may leave them blank)
+  year         Int?
+  fuelType     String?
+  transmission String?
+  seats        Int?
+  description  String?
+  /// Credited photos [{ url, thumbUrl, title, author, license, licenseUrl, sourceUrl }]
+  images       Json       @default("[]")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  purchases    Purchase[]
 
   @@index([make])
   @@index([model])

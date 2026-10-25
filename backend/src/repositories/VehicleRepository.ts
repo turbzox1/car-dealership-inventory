@@ -4,6 +4,8 @@ import { NewVehicle, Vehicle, VehicleSearch, VehicleUpdate } from '../domain/Veh
 export interface VehicleRepository {
   create(vehicle: NewVehicle): Promise<Vehicle>;
   findAll(): Promise<Vehicle[]>;
+  /** Returns null when no active (non-archived) vehicle has this id. */
+  findById(id: string): Promise<Vehicle | null>;
   search(criteria: VehicleSearch): Promise<Vehicle[]>;
   /** Returns null when no vehicle has this id. */
   update(id: string, changes: VehicleUpdate): Promise<Vehicle | null>;

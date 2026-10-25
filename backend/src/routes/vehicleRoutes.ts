@@ -11,6 +11,7 @@ export function createVehicleRoutes(controller: VehicleController, authenticate:
 
   router.get('/', controller.list);
   router.get('/search', validateQuery(searchVehicleSchema), controller.search);
+  router.get('/:id', controller.get);
   router.post('/', requireAdmin, validateBody(createVehicleSchema), controller.create);
   router.put('/:id', requireAdmin, validateBody(updateVehicleSchema), controller.update);
   router.delete('/:id', requireAdmin, controller.delete);

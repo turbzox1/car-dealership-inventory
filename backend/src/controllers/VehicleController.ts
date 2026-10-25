@@ -13,6 +13,10 @@ export class VehicleController {
     res.json(await this.vehicles.list());
   };
 
+  get = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    res.json(await this.vehicles.get(req.params.id));
+  };
+
   search = async (_req: Request, res: Response): Promise<void> => {
     res.json(await this.vehicles.search(res.locals.query));
   };
