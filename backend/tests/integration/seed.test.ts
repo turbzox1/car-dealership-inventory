@@ -64,6 +64,46 @@ describe('seedDatabase', () => {
     expect(after.price.toNumber()).toBe(39999);
   });
 
+  it('gives every sample vehicle basic details, a description and credited photos', async () => {
+    await seedDatabase(prisma, options);
+
+    const vehicles = await prisma.vehicle.findMany();
+    for (const v of vehicles) {
+      expect(v).toMatchObject({
+        year: expect.any(Number),
+        fuelType: expect.stringMatching(/^(Petrol|Diesel|Hybrid|Electric)$/),
+        transmission: expect.stringMatching(/^(Automatic|Manual)$/),
+        seats: expect.any(Number),
+        description: expect.any(String),
+      });
+      const images = v.images as { url: string; author: string; license: string; sourceUrl: string }[];
+      expect(images.length).toBeGreaterThan(0);
+      for (const image of images) {
+        expect(image).toMatchObject({
+          url: expect.stringMatching(/^https:\/\/upload\.wikimedia\.org\//),
+          author: expect.any(String),
+          license: expect.any(String),
+          sourceUrl: expect.stringMatching(/^https:\/\/commons\.wikimedia\.org\//),
+        });
+      }
+    }
+  });
+
+  it('fills in details and photos for existing sample vehicles that have none, without overwriting edits', async () => {
+    await prisma.vehicle.create({ data: { make: 'Toyota', model: 'Camry', category: 'SEDAN', price: 28400, quantity: 5 } });
+    await prisma.vehicle.create({
+      data: { make: 'Honda', model: 'Civic', category: 'SEDAN', price: 24650, quantity: 3, description: 'Edited by an admin' },
+    });
+
+    await seedDatabase(prisma, options);
+
+    const camry = await prisma.vehicle.findFirstOrThrow({ where: { make: 'Toyota', model: 'Camry' } });
+    const civic = await prisma.vehicle.findFirstOrThrow({ where: { make: 'Honda', model: 'Civic' } });
+    expect(camry.description).toEqual(expect.any(String));
+    expect((camry.images as unknown[]).length).toBeGreaterThan(0);
+    expect(civic.description).toBe('Edited by an admin');
+  });
+
   it('does not bring back a sample vehicle an admin archived', async () => {
     await seedDatabase(prisma, options);
     const camry = await prisma.vehicle.findFirstOrThrow({ where: { make: 'Toyota', model: 'Camry' } });
