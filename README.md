@@ -1,10 +1,10 @@
 # AutoVault: Car Dealership Inventory System
 
-A full-stack inventory system for a car dealership: customers browse the showroom, search and filter vehicles and buy in one click; admins add, edit, restock and archive vehicles and see every sale. Built test-first with an Express + TypeScript + PostgreSQL API and a React + Tailwind single-page app.
+A full-stack inventory system for a car dealership: customers browse a showroom of 37 cars with photos and details, search and filter, and buy one car directly or several through a cart; admins add, edit, restock and archive vehicles and see every sale. Built test-first with an Express + TypeScript + PostgreSQL API and a React + Tailwind single-page app.
 
-![Showroom with filters: a sold-out car has its Purchase button disabled](docs/screenshots/03-filters-and-sold-out.jpg)
+![Showroom: category shortcuts, filters and vehicle cards with live stock](docs/screenshots/03-showroom.jpg)
 
-**Tests:** 182 backend + 71 frontend, all passing · **Coverage:** backend 98.5% statements, frontend 98.1% statements · [Full test report](docs/TEST_REPORT.md)
+**Tests:** 232 backend + 87 frontend, all passing · **Coverage:** backend 98.6% statements, frontend 95.9% statements · [Full test report](docs/TEST_REPORT.md)
 
 ---
 
@@ -25,8 +25,9 @@ A full-stack inventory system for a car dealership: customers browse the showroo
 ## Features
 
 **Everyone (signed in)**
-- Register and sign in; the session survives a reload and signs out automatically when it expires.
-- Showroom of all vehicles with category, price and live stock ("3 in stock", "Only 1 left", "Out of stock").
+- Register and sign in through one form; the account's role decides what you can do. The session survives a reload and signs out automatically when it expires.
+- Home page with a headline, showroom stats and category shortcuts, then the showroom of all 37 sample vehicles with photo, category, price and live stock ("3 in stock", "Only 1 left", "Out of stock").
+- **Vehicle page** per car: photo gallery (freely licensed Wikimedia Commons photos, each credited with author and license), year, body, fuel, transmission, seats and a short description.
 - Search by make and model (partial, case-insensitive), filter by category and price range; results update as you type.
 - **Cart**: add cars from the showroom (never more than are in stock), adjust quantities, then **confirm the order**. Checkout is all or nothing: if any car sold out meanwhile, nothing is bought and the message names the car.
 - **Purchase** button on every car to buy it straight away, disabled when it is out of stock.
@@ -40,8 +41,10 @@ A full-stack inventory system for a car dealership: customers browse the showroo
 **Reliability and security**
 - Two customers can never buy the same last car: stock is checked and decremented in one atomic database update, backed by a database `CHECK (quantity >= 0)`. Cart checkouts lock cars in a fixed order, so competing carts can't deadlock.
 - Roles are read from the database on every request, so removing someone's admin rights takes effect immediately.
-- Failed logins and registrations are rate-limited per client.
-- The server refuses to start with a missing, short or placeholder `JWT_SECRET`.
+- Failed logins and registrations are rate-limited per client. Unknown emails cost the same bcrypt check as wrong passwords, so response times don't reveal which emails are registered.
+- Tokens are signed and verified with HS256 only; tokens using any other algorithm (including `none`) are rejected.
+- Security headers on every API response (Helmet: a locked-down CSP, HSTS, `nosniff`, `X-Frame-Options: DENY`, no referrer). Oversized request bodies (over 100 kB) get a 413.
+- The server refuses to start with a missing, short or placeholder `JWT_SECRET`. In development it listens on localhost only; with `NODE_ENV=production` it listens on all interfaces so a hosting platform can reach it (`HOST` overrides either).
 
 ## Tech stack
 
@@ -49,7 +52,7 @@ A full-stack inventory system for a car dealership: customers browse the showroo
 |---|---|
 | API | Node.js 24, Express 5, TypeScript (strict) |
 | Database | PostgreSQL 16 via Prisma 7 (`@prisma/adapter-pg`), Docker Compose for local dev |
-| Auth | JWT (`jsonwebtoken`), passwords hashed with `bcryptjs` |
+| Auth | JWT (`jsonwebtoken`, HS256), passwords hashed with `bcryptjs`, `helmet` security headers |
 | Validation | zod |
 | Frontend | React 19, Vite, Tailwind CSS v4, React Router |
 | Backend tests | Jest + ts-jest, Supertest, a real Postgres test database |
@@ -79,8 +82,8 @@ frontend/src
 ├── api/          fetch client (ApiError), per-resource calls, useApi (adds token, signs out on 401)
 ├── auth/         AuthProvider (session in localStorage, refreshed from /api/auth/me), route guards
 ├── cart/         CartProvider (cart in localStorage per account)
-├── pages/        Login, Register, Dashboard (showroom), Cart, My orders, All orders
-├── components/   VehicleCard, filters, dialogs, admin forms, shared states
+├── pages/        Login, Register, Dashboard (home + showroom), Vehicle detail, Cart, My orders, All orders
+├── components/   VehicleCard, VehiclePhoto (credited photos), OrderCard, header/footer, dialogs, admin forms
 └── test/         MSW server, render helpers
 ```
 
@@ -102,7 +105,7 @@ frontend/src
 
 ## API reference
 
-All responses are JSON. Errors look like `{ "error": "message" }`.
+All responses are JSON. Errors look like `{ "error": "message" }`: 400 invalid input or malformed JSON, 401 not signed in, 403 not allowed, 404 not found, 409 conflict (e.g. not enough stock), 413 body too large, 429 rate-limited.
 
 | Method | Path | Access | Notes |
 |---|---|---|---|
@@ -111,8 +114,9 @@ All responses are JSON. Errors look like `{ "error": "message" }`.
 | GET | `/api/auth/me` | signed in | Current account (role as it is now). |
 | GET | `/api/vehicles` | signed in | All non-archived vehicles. |
 | GET | `/api/vehicles/search` | signed in | Query: `make`, `model`, `category`, `minPrice`, `maxPrice` (all optional). |
-| POST | `/api/vehicles` | admin | `{ make, model, category, price, quantity }` → 201. |
-| PUT | `/api/vehicles/:id` | admin | Any of `make, model, category, price` (not quantity). |
+| GET | `/api/vehicles/:id` | signed in | One vehicle with its details and photos. |
+| POST | `/api/vehicles` | admin | `{ make, model, category, price, quantity }` plus optional `year, fuelType, transmission, seats, description` → 201. |
+| PUT | `/api/vehicles/:id` | admin | Any of `make, model, category, price` and the optional details (not quantity). |
 | DELETE | `/api/vehicles/:id` | admin | Archives the vehicle → 204. |
 | POST | `/api/vehicles/:id/purchase` | signed in | Optional `{ quantity }` (default 1) → 201 `{ purchase, vehicle }`; 409 if not enough stock. Recorded as a one-line order. |
 | POST | `/api/orders` | signed in | `{ items: [{ vehicleId, quantity }] }` (1–20 lines) → 201 `{ order, vehicles }`. All or nothing; 409 names the short vehicle, 404 if one no longer exists. |
@@ -159,8 +163,8 @@ The server deliberately refuses to start if these are missing or still placehold
 ```bash
 npx prisma generate          # generate the database client
 npx prisma migrate deploy    # create the tables
-npm run seed                 # admin account + 36 sample vehicles (safe to re-run)
-npm run dev                  # API on http://localhost:4000
+npm run seed                 # admin account + 37 sample vehicles with photos (safe to re-run)
+npm run dev                  # API on http://127.0.0.1:4000
 ```
 
 ### 3. Frontend
@@ -175,7 +179,9 @@ npm run dev                  # app on http://localhost:5173
 
 The dev server forwards `/api` to the backend on port 4000, so no CORS setup is needed locally. Sign in with the admin account from your `.env`, or register a new (regular) account.
 
-For a deployed build, set `VITE_API_URL` to the API's address before `npm run build`, and add the frontend's address to the backend's `CORS_ORIGINS`.
+For a deployed build, set `VITE_API_URL` to the API's address before `npm run build`, and add the frontend's address to the backend's `CORS_ORIGINS`. Run the API with `NODE_ENV=production` (listens on all interfaces) and `TRUST_PROXY=1` behind a hosting proxy.
+
+The sample photos are already in `backend/prisma/vehicle-photos.json`. To re-fetch them from Wikimedia Commons, give your own contact, which Wikimedia's API policy asks for: `WIKIMEDIA_CONTACT=you@example.com node scripts/fetch-vehicle-photos.mjs`.
 
 ## Running the tests
 
@@ -188,38 +194,45 @@ cd frontend && npm test              # or npm run test:coverage
 
 | Suite | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|
-| Backend (Jest) | 182 / 182 | 98.48% | 93.6% | 100% | 98.92% |
-| Frontend (Vitest) | 71 / 71 | 98.05% | 93.09% | 98.71% | 99.23% |
+| Backend (Jest) | 232 / 232 | 98.61% | 93.41% | 100% | 98.91% |
+| Frontend (Vitest) | 87 / 87 | 95.87% | 90.81% | 95.67% | 97.2% |
 
 The [full test report](docs/TEST_REPORT.md) lists every test and per-file coverage.
 
 What the tests cover:
 - **Backend unit tests**: services with in-memory fake repositories (business rules, validation, error cases).
-- **Backend integration tests**: every endpoint through HTTP against a real Postgres test database: status codes, 401 vs 403, validation, archiving, rate limits, startup config.
-- **Concurrency tests**: purchases fired in parallel straight at the repository (1 car / 5 buyers, 3 / 10, 5 / 30, mixed quantities, purchases racing restocks); carts racing for the last unit, and carts locking the same cars in opposite orders (no deadlocks). A deliberately broken purchase implementation was used to confirm these tests fail when overselling is possible.
-- **Frontend tests**: whole pages rendered with Testing Library and a mock API: forms, validation, loading, error and empty states, purchase and cart flows, checkout, admin dialogs, route guards, session refresh.
+- **Backend integration tests**: every endpoint through HTTP against a real Postgres test database: status codes, 401 vs 403, validation, archiving, rate limits, security headers, 413 for oversized bodies, startup config. Error tests check the specific error (e.g. the violated database constraint), not just that something failed.
+- **Security tests**: tokens with the wrong algorithm or `alg: none` are rejected; a login for an unknown email still runs a full bcrypt comparison.
+- **Concurrency tests**: purchases fired in parallel straight at the repository (1 car / 5 buyers, 3 / 10, 5 / 30, mixed quantities, purchases racing restocks); carts racing for the last unit, and carts locking the same cars in opposite orders (no deadlocks). Deliberately broken versions were run against them: removing the stock check fails 10 tests, removing the lock ordering fails the deadlock test.
+- **Frontend tests**: whole pages rendered with Testing Library and a mock API: forms, validation, loading, error and empty states, vehicle detail and photo credits, purchase and cart flows, checkout, admin dialogs, route guards, session refresh.
 
 ## Screenshots
 
 | | |
 |---|---|
-| ![Sign in](docs/screenshots/01-sign-in.jpg) Sign in | ![Showroom](docs/screenshots/02-showroom.jpg) Showroom |
-| ![Filters](docs/screenshots/03-filters-and-sold-out.jpg) Filters, and a sold-out car | ![My orders](docs/screenshots/04-my-orders.jpg) My orders |
-| ![Admin showroom](docs/screenshots/05-admin-showroom.jpg) Admin view with Restock / Edit / Delete | ![Add vehicle](docs/screenshots/06-add-vehicle.jpg) Add vehicle |
-| ![All orders](docs/screenshots/07-all-orders.jpg) All orders (admin) | ![Mobile](docs/screenshots/08-mobile.jpg) Phone layout |
+| ![Sign in](docs/screenshots/01-sign-in.jpg) Sign in | ![Home](docs/screenshots/02-home.jpg) Home page |
+| ![Showroom](docs/screenshots/03-showroom.jpg) Showroom and filters | ![Vehicle detail](docs/screenshots/04-vehicle-detail.jpg) Vehicle page with credited photos |
+| ![Cart](docs/screenshots/05-cart.jpg) Cart | ![My orders](docs/screenshots/06-my-orders.jpg) My orders |
+| ![Admin showroom](docs/screenshots/07-admin-showroom.jpg) Admin view with Restock / Edit / Delete | ![Add vehicle](docs/screenshots/08-add-vehicle.jpg) Add vehicle |
+| ![All orders](docs/screenshots/09-all-orders.jpg) All orders (admin) | ![Mobile](docs/screenshots/10-mobile.jpg) Phone layout |
 
 ## How it was built
 
-- **Test-driven:** features were built as red → green (→ refactor) commit pairs: 21 failing-test commits, each followed by the commit that makes it pass, plus refactor commits. The git history reads as the development story.
+- **Test-driven:** features were built as red → green (→ refactor) commit pairs: 27 failing-test commits, each followed by the commit that makes it pass, plus refactor commits. The git history reads as the development story.
 - **Reviewed for production readiness** midway through, which led to several fixes: genuinely concurrent overselling tests, rejecting placeholder secrets, per-request role checks, rate limiting, graceful shutdown and binding the dev database to localhost.
+- **Pre-release audit** at the end, which added security headers, 413 handling, HS256 pinning, equal-cost logins, a localhost-only dev server and stricter test assertions, each test-first.
 - **Checked in the browser** against the real backend after each frontend feature. This caught a price-formatting bug ("$18,500.5") that the tests had missed, which was then fixed test-first.
 
 ## Known limitations
 
 - Rate-limit counters live in memory: exact for one server, per-instance if the API is scaled out (a shared store such as Redis would fix that).
 - A role change appears in the UI on the next reload; the API enforces it immediately either way.
-- The JWT is stored in `localStorage` (see design decisions).
+- The JWT is stored in `localStorage` (see design decisions); signing out clears it in the browser but the token stays valid until it expires (at most 1 hour).
+- The admin Add/Edit form covers make, model, category, price and stock; the newer details (year, fuel, transmission, seats, description) can be set through the API and the seed but not yet in the form.
+- Checkout has no idempotency key: the UI disables the button while an order is placed, but a client that blindly retried a request could place it twice.
+- Lists aren't paginated (fine for a showroom of this size).
 - CI runs the backend suite only; the frontend suite runs locally.
+- This is a demo: there is no privacy notice, terms of sale or refund policy, which a real store would need.
 - Not deployed yet.
 
 ## My AI Usage
