@@ -6,47 +6,55 @@ import { asha, renderApp, storeSession } from '../test/renderApp';
 
 const admin = { ...asha, id: 'admin-1', name: 'Dana Admin', email: 'admin@dealership.com', role: 'ADMIN' as const };
 
+const line = (vehicleId: string, make: string, model: string, quantity: number, unitPrice: number) => ({
+  vehicleId, make, model, quantity, unitPrice, totalPrice: quantity * unitPrice,
+});
+
 // Midday UTC so the calendar date is the same in any test machine's timezone
-const civicOrder = {
-  id: 'p-1', userId: 'u-1', vehicleId: 'v-civic', make: 'Honda', model: 'Civic',
-  quantity: 2, unitPrice: 24650, totalPrice: 49300, purchasedAt: '2026-10-20T12:00:00.000Z',
+const cartOrder = {
+  id: 'aaaa1111-0000-0000-0000-000000000000', userId: 'u-1', createdAt: '2026-10-22T12:00:00.000Z',
+  items: [line('v-civic', 'Honda', 'Civic', 2, 24650), line('v-crv', 'Honda', 'CR-V', 1, 32150)],
+  total: 81450,
 };
-const crvOrder = {
-  id: 'p-2', userId: 'u-1', vehicleId: 'v-crv', make: 'Honda', model: 'CR-V',
-  quantity: 1, unitPrice: 32150, totalPrice: 32150, purchasedAt: '2026-10-22T12:00:00.000Z',
+const singleOrder = {
+  id: 'bbbb2222-0000-0000-0000-000000000000', userId: 'u-1', createdAt: '2026-10-20T12:00:00.000Z',
+  items: [line('v-golf', 'Volkswagen', 'Golf', 1, 23900)],
+  total: 23900,
 };
 const bobOrder = {
-  id: 'p-3', userId: 'u-2', vehicleId: 'v-golf', make: 'Volkswagen', model: 'Golf',
-  quantity: 1, unitPrice: 23900, totalPrice: 23900, purchasedAt: '2026-10-23T12:00:00.000Z',
+  ...singleOrder, id: 'cccc3333-0000-0000-0000-000000000000', userId: 'u-2',
   customer: { name: 'Bob Stone', email: 'bob@example.com' },
 };
 
-const row = (name: RegExp) => screen.getByRole('row', { name });
+const order = (number: string) => screen.getByRole('article', { name: new RegExp(`order #${number}`, 'i') });
 
 describe('My orders', () => {
-  it("lists the user's purchases with quantities, prices, dates and a total", async () => {
+  it('groups each order with its lines, date and total', async () => {
     let auth: string | null = null;
     server.use(
-      http.get(apiUrl('/api/purchases/me'), ({ request }) => {
+      http.get(apiUrl('/api/orders/me'), ({ request }) => {
         auth = request.headers.get('Authorization');
-        return HttpResponse.json([crvOrder, civicOrder]);
+        return HttpResponse.json([cartOrder, singleOrder]);
       }),
     );
     storeSession();
     renderApp('/orders');
 
     expect(await screen.findByRole('heading', { name: /my orders/i })).toBeInTheDocument();
-    const civic = await screen.findByRole('row', { name: /honda civic/i });
-    expect(within(civic).getByText('2')).toBeInTheDocument();
-    expect(within(civic).getByText('$24,650')).toBeInTheDocument();
-    expect(within(civic).getByText('$49,300')).toBeInTheDocument();
-    expect(within(civic).getByText(/oct 20, 2026/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 orders · \$81,450 spent/i)).toBeInTheDocument();
+    const cart = await screen.findByRole('article', { name: /order #AAAA1111/i });
+    expect(within(cart).getByText(/oct 22, 2026/i)).toBeInTheDocument();
+    expect(within(cart).getByText(/2 vehicles/i)).toBeInTheDocument();
+    expect(within(cart).getByText('$81,450')).toBeInTheDocument();
+    const civicRow = within(cart).getByRole('row', { name: /honda civic/i });
+    expect(within(civicRow).getByText('2')).toBeInTheDocument();
+    expect(within(civicRow).getByText('$49,300')).toBeInTheDocument();
+    expect(within(order('BBBB2222')).getByRole('row', { name: /volkswagen golf/i })).toBeInTheDocument();
+    expect(screen.getByText(/2 orders · \$105,350 spent/i)).toBeInTheDocument();
     expect(auth).toBe('Bearer stored-token');
   });
 
   it('points to the showroom when there are no orders yet', async () => {
-    server.use(http.get(apiUrl('/api/purchases/me'), () => HttpResponse.json([])));
+    server.use(http.get(apiUrl('/api/orders/me'), () => HttpResponse.json([])));
     storeSession();
     const { user } = renderApp('/orders');
 
@@ -59,8 +67,8 @@ describe('My orders', () => {
   it('shows an error with retry when loading fails', async () => {
     let attempts = 0;
     server.use(
-      http.get(apiUrl('/api/purchases/me'), () =>
-        ++attempts === 1 ? HttpResponse.json({ error: 'boom' }, { status: 500 }) : HttpResponse.json([civicOrder]),
+      http.get(apiUrl('/api/orders/me'), () =>
+        ++attempts === 1 ? HttpResponse.json({ error: 'boom' }, { status: 500 }) : HttpResponse.json([singleOrder]),
       ),
     );
     storeSession();
@@ -69,11 +77,11 @@ describe('My orders', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/couldn't load your orders/i);
     await user.click(screen.getByRole('button', { name: /try again/i }));
 
-    expect(await screen.findByRole('row', { name: /honda civic/i })).toBeInTheDocument();
+    expect(await screen.findByRole('article', { name: /order #BBBB2222/i })).toBeInTheDocument();
   });
 
   it('is reachable from the header navigation', async () => {
-    server.use(http.get(apiUrl('/api/purchases/me'), () => HttpResponse.json([civicOrder])));
+    server.use(http.get(apiUrl('/api/orders/me'), () => HttpResponse.json([singleOrder])));
     storeSession();
     const { user } = renderApp('/');
 
@@ -84,31 +92,31 @@ describe('My orders', () => {
 });
 
 describe('All orders (admin)', () => {
-  it('shows every purchase with the customer, plus revenue and units sold', async () => {
-    const ashaWithCustomer = { ...civicOrder, customer: { name: 'Asha Rao', email: 'asha@example.com' } };
-    server.use(http.get(apiUrl('/api/purchases'), () => HttpResponse.json([bobOrder, ashaWithCustomer])));
+  const ashaCart = { ...cartOrder, customer: { name: 'Asha Rao', email: 'asha@example.com' } };
+
+  it('shows every order with its customer, plus revenue and units sold', async () => {
+    server.use(http.get(apiUrl('/api/orders'), () => HttpResponse.json([ashaCart, bobOrder])));
     storeSession(admin);
     renderApp('/admin/orders');
 
     expect(await screen.findByRole('heading', { name: /all orders/i })).toBeInTheDocument();
-    const bob = await screen.findByRole('row', { name: /volkswagen golf/i });
+    const bob = await screen.findByRole('article', { name: /order #CCCC3333/i });
     expect(within(bob).getByText('Bob Stone')).toBeInTheDocument();
     expect(within(bob).getByText('bob@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/\$73,200/)).toBeInTheDocument(); // revenue 23,900 + 49,300
-    expect(screen.getByText(/3 units sold/i)).toBeInTheDocument();
+    expect(screen.getByText('$105,350')).toBeInTheDocument(); // revenue 81,450 + 23,900
+    expect(screen.getByText(/4 units sold/i)).toBeInTheDocument();
   });
 
-  it('filters by customer or vehicle as the admin types', async () => {
-    const ashaWithCustomer = { ...civicOrder, customer: { name: 'Asha Rao', email: 'asha@example.com' } };
-    server.use(http.get(apiUrl('/api/purchases'), () => HttpResponse.json([bobOrder, ashaWithCustomer])));
+  it('filters orders by customer or vehicle as the admin types', async () => {
+    server.use(http.get(apiUrl('/api/orders'), () => HttpResponse.json([ashaCart, bobOrder])));
     storeSession(admin);
     const { user } = renderApp('/admin/orders');
-    await screen.findByRole('row', { name: /volkswagen golf/i });
+    await screen.findByRole('article', { name: /order #CCCC3333/i });
 
-    await user.type(screen.getByRole('searchbox', { name: /search orders/i }), 'bob@');
+    await user.type(screen.getByRole('searchbox', { name: /search orders/i }), 'cr-v');
 
-    expect(row(/volkswagen golf/i)).toBeInTheDocument();
-    expect(screen.queryByRole('row', { name: /honda civic/i })).not.toBeInTheDocument();
+    expect(order('AAAA1111')).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: /order #CCCC3333/i })).not.toBeInTheDocument();
   });
 
   it('is linked in the header for admins only', async () => {
@@ -126,7 +134,7 @@ describe('All orders (admin)', () => {
   });
 
   it('shows the API message if admin rights were removed', async () => {
-    server.use(http.get(apiUrl('/api/purchases'), () => HttpResponse.json({ error: 'Admin access required' }, { status: 403 })));
+    server.use(http.get(apiUrl('/api/orders'), () => HttpResponse.json({ error: 'Admin access required' }, { status: 403 })));
     storeSession(admin);
     renderApp('/admin/orders');
 
