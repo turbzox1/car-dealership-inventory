@@ -2,7 +2,7 @@ import { RequestHandler, Router } from 'express';
 import { InventoryController } from '../controllers/InventoryController';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { validateBody } from '../middleware/validate';
-import { purchaseSchema, restockSchema } from '../validation/inventorySchemas';
+import { checkoutSchema, purchaseSchema, restockSchema } from '../validation/inventorySchemas';
 
 /** Mounted at /api. Each route declares its own auth so nothing else under /api is affected. */
 export function createInventoryRoutes(controller: InventoryController, authenticate: RequestHandler): Router {
@@ -11,5 +11,8 @@ export function createInventoryRoutes(controller: InventoryController, authentic
   router.post('/vehicles/:id/restock', authenticate, requireAdmin, validateBody(restockSchema), controller.restock);
   router.get('/purchases/me', authenticate, controller.myPurchases);
   router.get('/purchases', authenticate, requireAdmin, controller.allPurchases);
+  router.post('/orders', authenticate, validateBody(checkoutSchema), controller.checkout);
+  router.get('/orders/me', authenticate, controller.myOrders);
+  router.get('/orders', authenticate, requireAdmin, controller.allOrders);
   return router;
 }

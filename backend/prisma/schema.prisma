@@ -31,6 +31,7 @@ model User {
   role         Role       @default(USER)
   createdAt    DateTime   @default(now())
   purchases    Purchase[]
+  orders       Order[]
 }
 
 model Vehicle {
@@ -51,8 +52,21 @@ model Vehicle {
   @@index([category])
 }
 
+/// One checkout: a cart with one or more lines, or a single "Purchase" click.
+model Order {
+  id        String     @id @default(uuid())
+  userId    String
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  purchases Purchase[]
+
+  @@index([userId])
+}
+
+/// A line of an order: one vehicle with its quantity and price at the time of sale.
 model Purchase {
   id          String   @id @default(uuid())
+  orderId     String
   userId      String
   vehicleId   String
   // Snapshot of the vehicle at the time of sale
@@ -61,8 +75,10 @@ model Purchase {
   quantity    Int
   unitPrice   Decimal  @db.Decimal(12, 2)
   purchasedAt DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id])
   user        User     @relation(fields: [userId], references: [id])
   vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
 
   @@index([userId])
+  @@index([orderId])
 }

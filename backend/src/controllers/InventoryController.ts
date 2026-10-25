@@ -21,4 +21,16 @@ export class InventoryController {
   allPurchases = async (_req: Request, res: Response): Promise<void> => {
     res.json(await this.inventory.allPurchases());
   };
+
+  checkout = async (req: Request, res: Response): Promise<void> => {
+    res.status(201).json(await this.inventory.checkout(req.user!.id, req.body.items));
+  };
+
+  myOrders = async (req: Request, res: Response): Promise<void> => {
+    res.json(await this.inventory.ordersForUser(req.user!.id));
+  };
+
+  allOrders = async (_req: Request, res: Response): Promise<void> => {
+    res.json(await this.inventory.allOrders());
+  };
 }
