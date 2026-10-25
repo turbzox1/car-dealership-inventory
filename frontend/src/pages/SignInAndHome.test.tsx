@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { apiUrl, server } from '../test/server';
@@ -23,6 +23,18 @@ describe('Single sign-in form', () => {
     await user.click(screen.getByRole('button', { name: /^sign in/i }));
 
     expect(await screen.findByRole('link', { name: /all orders/i })).toBeInTheDocument();
+  });
+});
+
+describe('Main navigation on narrow screens', () => {
+  it('wraps its links instead of clipping them in a sideways-scrolling strip', async () => {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ token: 't', user: admin }));
+    renderApp('/');
+
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    expect(within(nav).getAllByRole('link')).toHaveLength(3);
+    expect(nav).not.toHaveClass('overflow-x-auto');
+    expect(nav).toHaveClass('flex-wrap');
   });
 });
 
