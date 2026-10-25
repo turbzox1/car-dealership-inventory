@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { RedirectIfAuthenticated, RequireAdmin, RequireAuth } from './auth/routeGuards';
+import { CartProvider } from './cart/CartProvider';
+import { CartPage } from './pages/CartPage';
 import { AllOrdersPage } from './pages/AllOrdersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
@@ -17,6 +19,7 @@ export function AppRoutes() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route element={<RequireAdmin />}>
           <Route path="/admin/orders" element={<AllOrdersPage />} />
@@ -31,7 +34,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <CartProvider>
+          <AppRoutes />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

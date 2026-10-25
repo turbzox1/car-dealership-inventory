@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { controlClass } from '../components/styles';
-import { fetchAllPurchases } from '../api/purchases';
+import { fetchAllOrders } from '../api/orders';
 import { AppHeader } from '../components/AppHeader';
-import { OrdersTable } from '../components/OrdersTable';
+import { OrderCard } from '../components/OrderCard';
 import { EmptyState, LoadError, LoadingRows } from '../components/PageStates';
 import { formatPrice } from '../format';
 import { useApiResource } from '../hooks/useApiResource';
-import type { Purchase } from '../types';
+import type { Order } from '../types';
 
-function matches(order: Purchase, query: string): boolean {
-  const haystack = `${order.customer?.name} ${order.customer?.email} ${order.make} ${order.model}`.toLowerCase();
+/** Matches the customer or any vehicle in the order. */
+function matches(order: Order, query: string): boolean {
+  const vehicles = order.items.map((i) => `${i.make} ${i.model}`).join(' ');
+  const haystack = `${order.customer?.name} ${order.customer?.email} ${vehicles}`.toLowerCase();
   return haystack.includes(query.trim().toLowerCase());
 }
 
@@ -24,18 +26,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /** Admin view of every sale. Search runs in the browser over the loaded list. */
 export function AllOrdersPage() {
-  const [orders, reload] = useApiResource(fetchAllPurchases);
+  const [orders, reload] = useApiResource(fetchAllOrders);
   const [query, setQuery] = useState('');
 
   const all = orders.status === 'ready' ? orders.data : [];
   const visible = query.trim() ? all.filter((o) => matches(o, query)) : all;
-  const revenue = all.reduce((sum, o) => sum + o.totalPrice, 0);
-  const units = all.reduce((sum, o) => sum + o.quantity, 0);
+  const revenue = all.reduce((sum, o) => sum + o.total, 0);
+  const units = all.reduce((sum, o) => sum + o.items.reduce((n, i) => n + i.quantity, 0), 0);
 
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <main className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12 sm:py-14">
         <span className="eyebrow">Admin</span>
         <h1 className="display mt-4 text-4xl text-ink-900 sm:text-5xl">All orders</h1>
         <p className="mt-2 text-[17px] text-slate-500">Every sale across the showroom.</p>
@@ -63,7 +65,11 @@ export function AllOrdersPage() {
                 className={`mb-4 max-w-sm ${controlClass(false, 'sm')}`}
               />
               {visible.length > 0 ? (
-                <OrdersTable orders={visible} showCustomer />
+                <div className="space-y-4">
+                  {visible.map((order) => (
+                    <OrderCard key={order.id} order={order} />
+                  ))}
+                </div>
               ) : (
                 <EmptyState title="No orders match your search" />
               )}

@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 /*
- * AutoVault design tokens (dark): blue-black surfaces, cool white ink, an amber accent, a touch of cyan.
- * Names are roles, not colours: "paper" is the page, "ink" the main text, so the same
- * components work for either theme. Text pairings checked against WCAG AA on page/card/panel:
- *   ink 14.8–17.2 · slate-600 10.3+ · slate-500 6.3+ · accent-600 10.0+ · teal-700 11.4+ · rose-700 8.5+
- * slate-400 (3.4–3.9:1) is for placeholders, borders and icons only, never body text.
+ * AutoVault design tokens (light): cool off-white page, white cards, dark navy ink,
+ * an amber accent and a touch of teal. Names are roles, not colours ("paper" is the
+ * page, "ink" the main text). Text pairings checked against WCAG AA on page/card/panel:
+ *   ink 15.8–17.9 · slate-600 9.2+ · slate-500 5.1+ · accent-600 5.2+ · teal-700 5.3+ · rose-700 5.8+
+ * slate-400 is for placeholders, borders and icons only, never body text.
  */
 @theme {
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
@@ -14,49 +14,48 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   /* Page, raised surfaces and ink */
-  --color-paper: #0a0e17;
-  --color-card: #111726;
-  --color-ink-950: #ffffff;
-  --color-ink-900: #eef2f8;
-  --color-ink-800: #d5dcea;
-  --color-ink-700: #b4bfd3;
+  --color-paper: #f4f6fa;
+  --color-card: #ffffff;
+  --color-ink-950: #020617;
+  --color-ink-900: #0f172a;
+  --color-ink-800: #1e293b;
+  --color-ink-700: #334155;
 
   /* Amber accent: 300–500 for fills and drawings, 600 for text */
-  --color-accent-300: #f7d58f;
+  --color-accent-300: #fbdc9a;
   --color-accent-400: #f2b33d;
   --color-accent-500: #e09a1f;
-  --color-accent-600: #f5c15a;
+  --color-accent-600: #8a5a00;
 
-  /* Cyan: status dots and small highlights */
+  /* Teal: status dots and small highlights */
   --color-teal-400: #5eead4;
-  --color-teal-500: #22b8a7;
-  --color-teal-700: #7ee8da;
+  --color-teal-500: #14a394;
+  --color-teal-700: #0f6f66;
 
-  /* Cool neutrals, dark to light (50 = deepest surface, 900 = brightest text) */
-  --color-slate-50: #111726;
-  --color-slate-100: #161e30;
-  --color-slate-200: #222c42;
-  --color-slate-300: #334059;
-  --color-slate-400: #64718c;
-  --color-slate-500: #94a0b8;
-  --color-slate-600: #c3ccdc;
-  --color-slate-700: #d5dcea;
-  --color-slate-800: #e3e8f1;
-  --color-slate-900: #eef2f8;
+  /* Cool neutrals, light to dark */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #eef1f6;
+  --color-slate-200: #e1e6ee;
+  --color-slate-300: #cbd3df;
+  --color-slate-400: #7b8597;
+  --color-slate-500: #5b6678;
+  --color-slate-600: #334155;
+  --color-slate-700: #273449;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
 
-  /* Errors: deep tinted surfaces with light text */
-  --color-rose-50: #2a1219;
-  --color-rose-100: #381722;
-  --color-rose-200: #5a2433;
-  --color-rose-400: #ea7f74;
-  --color-rose-500: #f08f84;
-  --color-rose-700: #f4a59a;
-  --color-rose-800: #f8bdb4;
+  /* Errors: soft tinted surfaces with dark red text */
+  --color-rose-50: #fef3f2;
+  --color-rose-100: #fee4e2;
+  --color-rose-200: #fecdca;
+  --color-rose-400: #f97066;
+  --color-rose-500: #f04438;
+  --color-rose-700: #b42318;
+  --color-rose-800: #912018;
 }
 
 :root {
-  /* Native controls (select menus, number spinners, scrollbars) follow the dark theme */
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {

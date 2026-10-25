@@ -28,16 +28,17 @@ A full-stack inventory system for a car dealership: customers browse the showroo
 - Register and sign in; the session survives a reload and signs out automatically when it expires.
 - Showroom of all vehicles with category, price and live stock ("3 in stock", "Only 1 left", "Out of stock").
 - Search by make and model (partial, case-insensitive), filter by category and price range; results update as you type.
-- **Purchase** button on every car, disabled when it is out of stock; buying updates the stock immediately.
-- **My orders**: every purchase with date, quantity, unit price and total.
+- **Cart**: add cars from the showroom (never more than are in stock), adjust quantities, then **confirm the order**. Checkout is all or nothing: if any car sold out meanwhile, nothing is bought and the message names the car.
+- **Purchase** button on every car to buy it straight away, disabled when it is out of stock.
+- **My orders**: each order with its number, date, vehicles, quantities and total.
 
 **Admins**
 - Add, edit, restock and delete vehicles from the showroom.
 - Delete archives the vehicle: it disappears from the showroom but past orders keep their details.
-- **All orders**: every sale with the customer, plus revenue and units sold, searchable.
+- **All orders**: every order with the customer, plus revenue and units sold, searchable by customer or vehicle.
 
 **Reliability and security**
-- Two customers can never buy the same last car: stock is checked and decremented in one atomic database update, backed by a database `CHECK (quantity >= 0)`.
+- Two customers can never buy the same last car: stock is checked and decremented in one atomic database update, backed by a database `CHECK (quantity >= 0)`. Cart checkouts lock cars in a fixed order, so competing carts can't deadlock.
 - Roles are read from the database on every request, so removing someone's admin rights takes effect immediately.
 - Failed logins and registrations are rate-limited per client.
 - The server refuses to start with a missing, short or placeholder `JWT_SECRET`.
@@ -77,7 +78,8 @@ backend/src
 frontend/src
 ├── api/          fetch client (ApiError), per-resource calls, useApi (adds token, signs out on 401)
 ├── auth/         AuthProvider (session in localStorage, refreshed from /api/auth/me), route guards
-├── pages/        Login, Register, Dashboard (showroom), My orders, All orders
+├── cart/         CartProvider (cart in localStorage per account)
+├── pages/        Login, Register, Dashboard (showroom), Cart, My orders, All orders
 ├── components/   VehicleCard, filters, dialogs, admin forms, shared states
 └── test/         MSW server, render helpers
 ```
@@ -86,7 +88,10 @@ frontend/src
 
 | Decision | Why |
 |---|---|
-| **Atomic purchase**: one `UPDATE … WHERE quantity >= n` inside a transaction, then insert the purchase | Postgres locks the row, so a second buyer re-checks against the new stock and gets a 409. Proven with tests that fire up to 30 concurrent purchases. |
+| **Atomic purchase**: one `UPDATE … WHERE quantity >= n` inside a transaction, then insert the order | Postgres locks the row, so a second buyer re-checks against the new stock and gets a 409. Proven with tests that fire up to 30 concurrent purchases. |
+| **All-or-nothing checkout** with locks taken in vehicle-id order | A cart is one transaction; any short line rolls back the rest. Sorting the lines means every checkout locks rows in the same order, so carts sharing cars can't deadlock (a test fails 2/2 runs without the sort). |
+| **Cart kept in the browser**, per account | No cart tables or endpoints; nothing is reserved, so the server re-checks everything at checkout. Trade-off: the cart doesn't follow you to another device. |
+| **Orders group purchase lines** | A checkout is one order with several lines; a single Purchase is a one-line order. Existing purchases were migrated into one-line orders. |
 | **Soft delete** (`isArchived`) | Purchases reference vehicles; archiving keeps order history intact. Purchases also store make, model and unit price at the time of sale. |
 | **Admins created by a seed script**, never via the API | No way to self-register as admin. `npm run seed` creates the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. |
 | **Only admins change the catalogue** | Matches the spec's admin UI. Regular users can browse and buy. |
@@ -109,10 +114,13 @@ All responses are JSON. Errors look like `{ "error": "message" }`.
 | POST | `/api/vehicles` | admin | `{ make, model, category, price, quantity }` → 201. |
 | PUT | `/api/vehicles/:id` | admin | Any of `make, model, category, price` (not quantity). |
 | DELETE | `/api/vehicles/:id` | admin | Archives the vehicle → 204. |
-| POST | `/api/vehicles/:id/purchase` | signed in | Optional `{ quantity }` (default 1) → 201 `{ purchase, vehicle }`; 409 if not enough stock. |
+| POST | `/api/vehicles/:id/purchase` | signed in | Optional `{ quantity }` (default 1) → 201 `{ purchase, vehicle }`; 409 if not enough stock. Recorded as a one-line order. |
+| POST | `/api/orders` | signed in | `{ items: [{ vehicleId, quantity }] }` (1–20 lines) → 201 `{ order, vehicles }`. All or nothing; 409 names the short vehicle, 404 if one no longer exists. |
+| GET | `/api/orders/me` | signed in | The caller's orders with their lines, newest first. |
+| GET | `/api/orders` | admin | All orders with the customer's name and email. |
 | POST | `/api/vehicles/:id/restock` | admin | `{ amount }` (1–1000) → updated vehicle. |
-| GET | `/api/purchases/me` | signed in | The caller's purchases. |
-| GET | `/api/purchases` | admin | All purchases with the customer's name and email. |
+| GET | `/api/purchases/me` | signed in | The caller's purchase lines, ungrouped (kept for compatibility). |
+| GET | `/api/purchases` | admin | All purchase lines with the customer (kept for compatibility). |
 | GET | `/api/health` | public | `{ status: "ok" }` |
 
 Categories: `SEDAN`, `SUV`, `TRUCK`, `HATCHBACK`, `COUPE`, `CONVERTIBLE`, `VAN`, `EV`.
@@ -151,7 +159,7 @@ The server deliberately refuses to start if these are missing or still placehold
 ```bash
 npx prisma generate          # generate the database client
 npx prisma migrate deploy    # create the tables
-npm run seed                 # admin account + 9 sample vehicles (safe to re-run)
+npm run seed                 # admin account + 36 sample vehicles (safe to re-run)
 npm run dev                  # API on http://localhost:4000
 ```
 
@@ -188,8 +196,8 @@ The [full test report](docs/TEST_REPORT.md) lists every test and per-file covera
 What the tests cover:
 - **Backend unit tests**: services with in-memory fake repositories (business rules, validation, error cases).
 - **Backend integration tests**: every endpoint through HTTP against a real Postgres test database: status codes, 401 vs 403, validation, archiving, rate limits, startup config.
-- **Concurrency tests**: purchases fired in parallel straight at the repository (1 car / 5 buyers, 3 / 10, 5 / 30, mixed quantities, purchases racing restocks). A deliberately broken purchase implementation was used to confirm these tests fail when overselling is possible.
-- **Frontend tests**: whole pages rendered with Testing Library and a mock API: forms, validation, loading, error and empty states, purchase flow, admin dialogs, route guards, session refresh.
+- **Concurrency tests**: purchases fired in parallel straight at the repository (1 car / 5 buyers, 3 / 10, 5 / 30, mixed quantities, purchases racing restocks); carts racing for the last unit, and carts locking the same cars in opposite orders (no deadlocks). A deliberately broken purchase implementation was used to confirm these tests fail when overselling is possible.
+- **Frontend tests**: whole pages rendered with Testing Library and a mock API: forms, validation, loading, error and empty states, purchase and cart flows, checkout, admin dialogs, route guards, session refresh.
 
 ## Screenshots
 

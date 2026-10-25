@@ -14,6 +14,7 @@ import { VehicleFormDialog } from '../components/admin/VehicleFormDialog';
 import { useApi } from '../api/useApi';
 import { fetchVehicles, hasActiveFilters, purchaseVehicle } from '../api/vehicles';
 import { useAuth } from '../auth/useAuth';
+import { useCart } from '../cart/useCart';
 import { AppHeader } from '../components/AppHeader';
 import { EmptyState, LoadError } from '../components/PageStates';
 import { buttonAccent } from '../components/styles';
@@ -45,6 +46,7 @@ function priceRangeError({ minPrice, maxPrice }: VehicleFilters): string | undef
 
 export function DashboardPage() {
   const call = useApi();
+  const cart = useCart();
   const { user } = useAuth();
   const [filters, setFilters] = useState<VehicleFilters>(NO_FILTERS);
   const appliedFilters = useDebouncedValue(filters, SEARCH_DELAY_MS);
@@ -121,6 +123,10 @@ export function DashboardPage() {
       }
     : undefined;
 
+  function handleAddToCart(vehicle: Vehicle) {
+    if (cart.add(vehicle)) notify('success', `Added ${vehicle.make} ${vehicle.model} to your cart.`);
+  }
+
   async function handlePurchase(vehicle: Vehicle) {
     if (buyingRef.current) return;
     buyingRef.current = true;
@@ -146,7 +152,7 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <main className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12 sm:py-14">
         <div className="rise flex flex-wrap items-end justify-between gap-5">
           <div>
             <span className="eyebrow">Showroom</span>
@@ -184,7 +190,7 @@ export function DashboardPage() {
 
         <section aria-label="Vehicles" className="mt-6">
           {load.status === 'loading' && (
-            <div role="status" aria-label="Loading vehicles" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div role="status" aria-label="Loading vehicles" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="h-[22rem] animate-pulse rounded-3xl bg-slate-200/60" />
               ))}
@@ -200,13 +206,15 @@ export function DashboardPage() {
           )}
 
           {load.status === 'ready' && vehicles.length > 0 && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {vehicles.map((vehicle) => (
                 <VehicleCard
                   key={vehicle.id}
                   vehicle={vehicle}
                   buying={buyingId === vehicle.id}
                   onPurchase={handlePurchase}
+                  inCart={cart.quantityOf(vehicle.id)}
+                  onAddToCart={handleAddToCart}
                   admin={adminActions}
                 />
               ))}

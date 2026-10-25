@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '../App';
 import { AuthProvider } from '../auth/AuthProvider';
+import { CartProvider } from '../cart/CartProvider';
 import type { User } from '../types';
 
 /** Renders the whole app at a given URL, the way a user would land on it. */
@@ -11,7 +12,9 @@ export function renderApp(path = '/') {
   const utils = render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
-        <AppRoutes />
+        <CartProvider>
+          <AppRoutes />
+        </CartProvider>
       </AuthProvider>
     </MemoryRouter>,
   );

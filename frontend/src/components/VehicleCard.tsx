@@ -1,7 +1,7 @@
 import { formatPrice, stockLabel } from '../format';
 import { CATEGORY_LABELS, type Category, type Vehicle } from '../types';
 import { SketchCar } from './SketchCar';
-import { buttonPrimary } from './styles';
+import { buttonOutline, buttonPrimary } from './styles';
 
 /** Marker-wash colour behind each sketch: warm, low-saturation, decorative only. */
 const CATEGORY_WASH: Record<Category, string> = {
@@ -31,6 +31,9 @@ interface VehicleCardProps {
   vehicle: Vehicle;
   buying: boolean;
   onPurchase(vehicle: Vehicle): void;
+  /** Units of this vehicle already in the cart. */
+  inCart: number;
+  onAddToCart(vehicle: Vehicle): void;
   /** Only passed for admins; the controls aren't rendered otherwise. */
   admin?: AdminActions;
 }
@@ -38,9 +41,10 @@ interface VehicleCardProps {
 const adminButton =
   'rounded-full px-3 py-1.5 font-mono text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/20';
 
-export function VehicleCard({ vehicle, buying, onPurchase, admin }: VehicleCardProps) {
+export function VehicleCard({ vehicle, buying, onPurchase, inCart, onAddToCart, admin }: VehicleCardProps) {
   const name = `${vehicle.make} ${vehicle.model}`;
   const soldOut = vehicle.quantity === 0;
+  const allInCart = !soldOut && inCart >= vehicle.quantity;
 
   return (
     <article
@@ -70,17 +74,28 @@ export function VehicleCard({ vehicle, buying, onPurchase, admin }: VehicleCardP
           </span>
         </div>
 
-        <button
-          type="button"
-          disabled={soldOut || buying}
-          onClick={() => onPurchase(vehicle)}
-          className={`${buttonPrimary} mt-5 w-full`}
-        >
-          {buying && (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-paper/40 border-t-paper" aria-hidden="true" />
-          )}
-          {buying ? 'Buying…' : 'Purchase'}
-        </button>
+        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+          <button
+            type="button"
+            disabled={soldOut || allInCart}
+            onClick={() => onAddToCart(vehicle)}
+            className={buttonPrimary}
+          >
+            {allInCart ? 'All in cart' : 'Add to cart'}
+          </button>
+          {/* Buy this one car straight away (the assignment's Purchase button) */}
+          <button type="button" disabled={soldOut || buying} onClick={() => onPurchase(vehicle)} className={buttonOutline}>
+            {buying && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-900/30 border-t-ink-900" aria-hidden="true" />
+            )}
+            {buying ? 'Buying…' : 'Purchase'}
+          </button>
+        </div>
+        {inCart > 0 && (
+          <p className="mt-2 font-mono text-[11px] text-accent-600">
+            {inCart} in your cart
+          </p>
+        )}
 
         {admin && (
           <div className="mt-3 flex items-center justify-between gap-1 border-t border-dashed border-slate-200 pt-3">

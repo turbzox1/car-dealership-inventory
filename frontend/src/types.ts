@@ -41,19 +41,37 @@ export interface VehicleFilters {
   maxPrice: string;
 }
 
-/** A completed purchase; make, model and price are as they were at the time of sale. */
-export interface Purchase {
-  id: string;
-  userId: string;
+/** A line of an order; make, model and price are as they were at the time of sale. */
+export interface OrderItem {
   vehicleId: string;
   make: string;
   model: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  purchasedAt: string;
+}
+
+/** A checkout: a cart with several lines, or a single Purchase click. */
+export interface Order {
+  id: string;
+  userId: string;
+  createdAt: string;
+  total: number;
+  items: OrderItem[];
   /** Only in the admin listing. */
   customer?: { name: string; email: string };
+}
+
+/** A cart line, with a snapshot of the vehicle so the cart renders without a request. */
+export interface CartItem {
+  vehicleId: string;
+  make: string;
+  model: string;
+  category: Category;
+  price: number;
+  /** Stock when last seen; caps the quantity (the server re-checks at checkout). */
+  stock: number;
+  quantity: number;
 }
 
 export interface Session {
