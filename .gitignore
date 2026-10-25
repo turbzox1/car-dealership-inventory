@@ -6,3 +6,6 @@ coverage/
 *.log
 *.pdf
 .vercel
+
+# Local-only credentials
+*.local.txt

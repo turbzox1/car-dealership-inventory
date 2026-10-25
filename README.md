@@ -4,6 +4,8 @@ A full-stack inventory system for a car dealership: customers browse a showroom 
 
 ![Showroom: category shortcuts, filters and vehicle cards with live stock](docs/screenshots/03-showroom.jpg)
 
+**Live demo:** https://autovault-dealership.vercel.app (register an account to browse and buy)
+
 **Tests:** 232 backend + 87 frontend, all passing · **Coverage:** backend 98.6% statements, frontend 95.9% statements · [Full test report](docs/TEST_REPORT.md)
 
 ---
@@ -233,7 +235,7 @@ What the tests cover:
 - Lists aren't paginated (fine for a showroom of this size).
 - CI runs the backend suite only; the frontend suite runs locally.
 - This is a demo: there is no privacy notice, terms of sale or refund policy, which a real store would need.
-- Not deployed yet.
+- Deployed on Vercel (frontend + API as a serverless function) with a Neon Postgres database; rate-limit counters are per function instance there.
 
 ## My AI Usage
 
