@@ -1,10 +1,9 @@
 # AutoVault: Car Dealership Inventory System
+n**🔗 Live demo: https://autovault-dealership.vercel.app**
 
 A full-stack inventory system for a car dealership: customers browse a showroom of 37 cars with photos and details, search and filter, and buy one car directly or several through a cart; admins add, edit, restock and archive vehicles and see every sale. Built test-first with an Express + TypeScript + PostgreSQL API and a React + Tailwind single-page app.
 
 ![Showroom: category shortcuts, filters and vehicle cards with live stock](docs/screenshots/03-showroom.jpg)
-
-**Live demo:** https://autovault-dealership.vercel.app (register an account to browse and buy)
 
 **Tests:** 232 backend + 87 frontend, all passing · **Coverage:** backend 98.6% statements, frontend 95.9% statements · [Full test report](docs/TEST_REPORT.md)
 
