@@ -16,8 +16,8 @@ export function controlClass(hasError = false, size: 'md' | 'sm' = 'md'): string
 const buttonBase =
   'inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed';
 
-// Amber with black text (10.6:1): the main action stands out from outlined secondary buttons
-export const buttonPrimary = `${buttonBase} bg-accent-400 text-black hover:bg-accent-300 focus-visible:ring-accent-400 focus-visible:ring-offset-paper disabled:bg-slate-200 disabled:text-slate-500`;
+// Soft grey-white with black text (13.5:1): clear main action without the glare of pure white
+export const buttonPrimary = `${buttonBase} bg-[#cfcfcf] text-black hover:bg-[#e2e2e2] focus-visible:ring-[#cfcfcf] focus-visible:ring-offset-paper disabled:bg-slate-200 disabled:text-slate-500`;
 export const buttonAccent = `${buttonBase} bg-accent-400 text-ink-900 hover:bg-accent-500 focus-visible:ring-accent-500`;
 export const buttonOutline = `${buttonBase} border border-ink-900 text-ink-900 hover:bg-ink-900 hover:text-paper focus-visible:ring-ink-900 disabled:border-slate-300 disabled:text-slate-400 disabled:hover:bg-transparent`;
 /** For use on top of photos and dark sections. */
