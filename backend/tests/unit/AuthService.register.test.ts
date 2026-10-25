@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { AuthService } from '../../src/services/AuthService';
 import { InMemoryUserRepository } from '../fakes/InMemoryUserRepository';
 import { ConflictError } from '../../src/domain/errors';
@@ -23,8 +24,8 @@ describe('AuthService.register', () => {
     await auth.register({ name: 'Asha', email: 'asha@example.com', password: 'secret123' });
 
     const stored = await users.findByEmail('asha@example.com');
-    expect(stored?.passwordHash).toBeDefined();
-    expect(stored?.passwordHash).not.toBe('secret123');
+    expect(stored?.passwordHash).toMatch(/^\$2[aby]\$10\$/);
+    expect(await bcrypt.compare('secret123', stored!.passwordHash)).toBe(true);
   });
 
   it('rejects a duplicate email', async () => {

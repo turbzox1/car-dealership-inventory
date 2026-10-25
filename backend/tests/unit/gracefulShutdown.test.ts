@@ -48,7 +48,7 @@ describe('createGracefulShutdown', () => {
 
     await shutdown('SIGTERM');
 
-    await expect(fetch(`${url}/slow`)).rejects.toThrow();
+    await expect(fetch(`${url}/slow`)).rejects.toMatchObject({ cause: { code: 'ECONNREFUSED' } });
   });
 
   it('gives up waiting after the timeout so a stuck request cannot block shutdown', async () => {

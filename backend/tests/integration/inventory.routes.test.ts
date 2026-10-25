@@ -266,7 +266,8 @@ describe('Inventory routes (Postgres)', () => {
     it('rejects negative stock even if application code tried to write it', async () => {
       const id = await createVehicle(1);
 
-      await expect(prisma.vehicle.update({ where: { id }, data: { quantity: -1 } })).rejects.toThrow();
+      await expect(prisma.vehicle.update({ where: { id }, data: { quantity: -1 } })).rejects.toThrow(/Vehicle_quantity_non_negative/);
+      expect(await prisma.vehicle.findUniqueOrThrow({ where: { id } })).toMatchObject({ quantity: 1 });
     });
   });
 });

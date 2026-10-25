@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { ConflictError } from '../../src/domain/errors';
 import { PrismaUserRepository } from '../../src/repositories/PrismaUserRepository';
 import { createTestPrisma, resetDatabase } from './helpers/testDb';
@@ -28,6 +28,7 @@ describe('PrismaUserRepository', () => {
   it('rethrows other database errors unchanged', async () => {
     const invalidRole = { name: 'A', email: 'b@example.com', passwordHash: 'h', role: 'NOT_A_ROLE' as never };
 
-    await expect(repo.create(invalidRole)).rejects.not.toThrow(ConflictError);
+    await expect(repo.create(invalidRole)).rejects.toBeInstanceOf(Prisma.PrismaClientValidationError);
+    expect(await prisma.user.count()).toBe(0);
   });
 });

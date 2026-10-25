@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { ZodError } from 'zod';
 import { seedDatabase } from '../../src/db/seed';
 import { createTestPrisma, resetDatabase } from './helpers/testDb';
 
@@ -127,14 +128,18 @@ describe('seedDatabase', () => {
   });
 
   it.each([
-    ['missing email', { adminEmail: '', adminPassword: 'super-secret-1' }],
-    ['invalid email', { adminEmail: 'not-an-email', adminPassword: 'super-secret-1' }],
-    ['short password', { adminEmail: 'admin@dealership.com', adminPassword: 'short' }],
+    ['missing email', { adminEmail: '', adminPassword: 'super-secret-1' }, 'adminEmail'],
+    ['invalid email', { adminEmail: 'not-an-email', adminPassword: 'super-secret-1' }, 'adminEmail'],
+    ['short password', { adminEmail: 'admin@dealership.com', adminPassword: 'short' }, 'adminPassword'],
     // Seeding is called directly in some setups, so it must not rely on the CLI's env checks
-    ['placeholder password', { adminEmail: 'admin@dealership.com', adminPassword: 'change-me-too' }],
-    ['password under 12 characters', { adminEmail: 'admin@dealership.com', adminPassword: 'Abcdef-123' }],
-  ])('refuses to run with %s', async (_case, badOptions) => {
-    await expect(seedDatabase(prisma, badOptions)).rejects.toThrow();
+    ['placeholder password', { adminEmail: 'admin@dealership.com', adminPassword: 'change-me-too' }, 'adminPassword'],
+    ['password under 12 characters', { adminEmail: 'admin@dealership.com', adminPassword: 'Abcdef-123' }, 'adminPassword'],
+  ] as const)('refuses to run with %s', async (_case, badOptions, invalidField) => {
+    const error = await seedDatabase(prisma, badOptions).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ZodError);
+    // Only the bad option is reported
+    expect((error as ZodError).issues.map((i) => i.path)).toEqual(expect.arrayContaining([[invalidField]]));
+    expect((error as ZodError).issues.every((i) => i.path[0] === invalidField)).toBe(true);
     expect(await prisma.user.count()).toBe(0);
   });
 });

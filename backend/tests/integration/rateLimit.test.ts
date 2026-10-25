@@ -36,7 +36,9 @@ describe('Auth rate limiting (Postgres)', () => {
     expect(statuses).toEqual([401, 401, 401, 429]);
     const blocked = await wrongLogin(app);
     expect(blocked.body).toEqual({ error: expect.stringMatching(/too many/i) });
-    expect(blocked.headers['retry-after']).toBeDefined();
+    // Seconds until the window resets: positive and no longer than the window
+    expect(Number(blocked.headers['retry-after'])).toBeGreaterThan(0);
+    expect(Number(blocked.headers['retry-after'])).toBeLessThanOrEqual(LIMITS.windowMs / 1000);
   });
 
   it('also blocks the correct password once the limit is reached', async () => {
