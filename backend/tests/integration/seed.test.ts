@@ -41,12 +41,37 @@ describe('seedDatabase', () => {
     expect(await prisma.vehicle.count()).toBe(vehiclesAfterFirstRun);
   });
 
-  it('does not add sample vehicles when the catalogue already has data', async () => {
-    await prisma.vehicle.create({ data: { make: 'Ford', model: 'F-150', category: 'TRUCK', price: 45000, quantity: 1 } });
+  it('offers a full showroom: at least 30 vehicles covering every category', async () => {
+    await seedDatabase(prisma, options);
+
+    expect(await prisma.vehicle.count()).toBeGreaterThanOrEqual(30);
+    const categories = await prisma.vehicle.groupBy({ by: ['category'] });
+    expect(categories).toHaveLength(8);
+  });
+
+  it('adds only the missing sample vehicles and leaves existing ones untouched', async () => {
+    await seedDatabase(prisma, options);
+    const fullCount = await prisma.vehicle.count();
+    const f150 = await prisma.vehicle.findFirstOrThrow({ where: { make: 'Ford', model: 'F-150' } });
+    await prisma.vehicle.update({ where: { id: f150.id }, data: { price: 39999, quantity: 0 } });
+    await prisma.vehicle.delete({ where: { id: (await prisma.vehicle.findFirstOrThrow({ where: { make: 'Toyota', model: 'Camry' } })).id } });
 
     await seedDatabase(prisma, options);
 
-    expect(await prisma.vehicle.count()).toBe(1);
+    expect(await prisma.vehicle.count()).toBe(fullCount);
+    const after = await prisma.vehicle.findUniqueOrThrow({ where: { id: f150.id } });
+    expect(after).toMatchObject({ quantity: 0 });
+    expect(after.price.toNumber()).toBe(39999);
+  });
+
+  it('does not bring back a sample vehicle an admin archived', async () => {
+    await seedDatabase(prisma, options);
+    const camry = await prisma.vehicle.findFirstOrThrow({ where: { make: 'Toyota', model: 'Camry' } });
+    await prisma.vehicle.update({ where: { id: camry.id }, data: { isArchived: true } });
+
+    await seedDatabase(prisma, options);
+
+    expect(await prisma.vehicle.count({ where: { make: 'Toyota', model: 'Camry' } })).toBe(1);
   });
 
   it('promotes an existing user with the admin email without changing their password', async () => {
